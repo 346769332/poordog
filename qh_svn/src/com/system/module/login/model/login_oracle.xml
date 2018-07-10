@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="login">
+	<select id="getExemptionConfig" parameterType="java.lang.Object" resultType="com.frame.common.ExemptionInfo">
+		SELECT TYPE "type",
+		       ADDRESS "address",
+		       STAFF "staff",
+		       STATE "state"
+		  FROM TB_LARGE_SYS_EXEMPTION_CONFIG
+		 WHERE STATE = 'V'
+		   AND ADDRESS=#{address}
+		   AND TYPE='IP'
+    </select>
+	<select id="getLoginInfo" parameterType="java.lang.Object" resultType="com.frame.common.LoginInfo">       
+ 		SELECT A.USERID "userId",
+		       A.ACCT "userAcct",
+		       A.NAME "userName",
+		       A.STAFF_CODE "loginCode",
+		       A.USERPHONE "userPhone",
+		       nvl(C.ROLEID,'') "roleId",
+		       nvl(C.ROLENAME,'') "roleName"
+		  FROM TB_LARGE_USER A,
+		       TB_LARGE_USER_ROLE B,		       
+		       TB_LARGE_ROLE C
+			<if test="type=='phone'">
+		       ,TB_LARGE_SEND_MSG F
+			</if>
+		 WHERE A.USERID = B.USERID(+)
+		   AND B.ROLEID = C.ROLEID(+)
+		<choose>
+		  <when test="type=='phone'">
+		   AND A.USERID = F.USER_ID
+		   AND A.USERPHONE = F.PHONE
+		   AND F.KEY_WORD = #{msgCode}
+		   AND F.PHONE = #{acct}
+		   AND F.SEND_DT BETWEEN SYSDATE-3/60/24 AND SYSDATE
+		  </when>
+		  <when test="type=='automatic'">
+		   AND A.ACCT = #{acct}
+		  </when>
+		  <otherwise>
+		   AND A.ACCT = #{acct}
+ 		   AND PASSWORD = #{token}
+		  </otherwise>
+		</choose>
+    </select>
+	<select id="generateMsgCode" statementType="CALLABLE" parameterType="java.lang.Object">       
+ 		{call P_LARGE_LOGIN(#{acct,mode=IN,jdbcType=VARCHAR},#{result,mode=OUT,jdbcType=VARCHAR})}
+    </select>
+    <select id="getMenuInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">       
+ 		SELECT DISTINCT
+ 			   B.MODULEID "menu_code",
+		       B.PARENT_MOD "parent_menu_code",
+		       B.MOD_LEVEL "menu_level",
+		       B.MOD_NAME "menu_title",
+		       B.MENU_URL "menu_url",
+		       B.POSITION
+		  FROM TB_LARGE_ROLE_MODULE A,
+		  	   TB_LARGE_MODULE B
+		 WHERE A.MODULE_ID = B.MODULEID
+		   AND A.ROLE_ID = #{roleId}
+		 ORDER BY B.MOD_LEVEL, B.PARENT_MOD, B.POSITION
+    </select>
+</mapper>

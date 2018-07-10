@@ -1,0 +1,18 @@
+#Wed Mar 15 20:55:45 CST 2017
+eclipse.preferences.version=1
+encoding//WebRoot/system/login/login.jsp=UTF-8
+encoding//WebRoot/system/page/module/business/css/business.css=UTF-8
+encoding//WebRoot/system/page/module/home/css/home.css=UTF-8
+encoding//WebRoot/system/page/module/operation/css/operation.css=UTF-8
+encoding//WebRoot/system/page/module/travel/css/travel.css=UTF-8
+encoding//WebRoot/system/page/resource/css/common.css=UTF-8
+encoding//WebRoot/system/page/resource/css/custom.table.css=UTF-8
+encoding//WebRoot/system/page/resource/css/error.css=UTF-8
+encoding//WebRoot/system/page/resource/css/login.css=UTF-8
+encoding//WebRoot/system/page/resource/css/main.css=UTF-8
+encoding//WebRoot/system/page/resource/css/main_lean.css=UTF-8
+encoding//WebRoot/system/page/resource/css/page.css=UTF-8
+encoding//WebRoot/system/page/resource/jsp/header_easyui.jsp=UTF-8
+encoding//src/config/jdbc.properties=UTF-8
+encoding//src/config/log4j.properties=UTF-8
+encoding/<project>=UTF-8

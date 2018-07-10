@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oweFee">
+	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT E.NAME latn_name, 
+		       SUM(A.OWE_NUMBER) owe_number
+		  FROM TB_LARGE_OWE        A,
+		       TB_LARGE_CODE       B,
+		       TB_LARGE_CODE       C,
+		       VW_LOC_AREA D,
+		       VW_LOC_AREA E,
+		       TB_LARGE_AREA       F
+		 WHERE A.OWE_TYPE = B.CODE_VALUE
+		   AND A.AREA_ID = D.AREA_ID
+		   AND D.AREA_LEVEL = 4
+		   AND A.AREA_ID = F.AREA_ID
+		   AND A.LATN_ID = E.ZONE_NUMBER
+		   AND E.AREA_LEVEL = 3
+		   AND TO_CHAR(A.OWE_DUR) = C.CODE_VALUE
+		   AND B.CODE_TYPE = 'OWE_TYPE'
+		   AND C.CODE_TYPE = 'OWE_TIME'
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_LARGE_OWE)
+		   AND A.OWE_FLAG=1
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)			
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.LATN_ID, E.NAME
+		 ORDER BY OWE_CHARGE DESC
+	</select>
+ 	<!-- 当月欠费金额趋势 -->
+	<select id="getTrendInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.DAY_ID day_id,
+		       SUM(A.OWE_CHARGE) owe_charge
+		  FROM TB_LARGE_OWE        A,
+		       TB_LARGE_CODE       B,
+		       TB_LARGE_CODE       C,
+		       VW_LOC_AREA D,
+		       VW_LOC_AREA E,
+		       TB_LARGE_AREA       F
+		 WHERE A.OWE_TYPE = B.CODE_VALUE
+		   AND A.OWE_FLAG=1
+		   AND A.AREA_ID = D.AREA_ID
+		   AND D.AREA_LEVEL = 4
+		   AND A.LATN_ID = E.ZONE_NUMBER
+		   AND E.AREA_LEVEL = 3
+		   AND A.AREA_ID = F.AREA_ID
+		   AND TO_CHAR(A.OWE_DUR) = C.CODE_VALUE
+		   AND B.CODE_TYPE = 'OWE_TYPE'
+		   AND C.CODE_TYPE = 'OWE_TIME'
+		   AND instr(A.DAY_ID, TO_CHAR(sysdate, 'yyyymm')) > 0
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)			
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.DAY_ID
+		 ORDER BY DAY_ID
+    </select>
+    <!-- 分析结论 -->
+    <select id="getResultInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+    </select>
+    <!-- 欠费组成分布 -->
+    <select id="getFormInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT C.CODE_NAME owe_type, 
+		       SUM(A.OWE_CHARGE) owe_charge
+		  FROM TB_LARGE_OWE        A,
+		       TB_LARGE_CODE       B,
+		       TB_LARGE_CODE       C,
+		       VW_LOC_AREA D,
+		       VW_LOC_AREA E,
+		       TB_LARGE_AREA       F
+		 WHERE A.OWE_TYPE = B.CODE_VALUE
+		   AND A.AREA_ID = D.AREA_ID
+		   AND D.AREA_LEVEL = 4
+		   AND A.LATN_ID = E.ZONE_NUMBER
+		   AND E.AREA_LEVEL = 3
+		   AND A.AREA_ID = F.AREA_ID
+		   AND TO_CHAR(A.OWE_DUR) = C.CODE_VALUE
+		   AND B.CODE_TYPE = 'OWE_TYPE'
+		   AND C.CODE_TYPE = 'OWE_TIME'
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_LARGE_OWE)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)			
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY C.CODE_VALUE, C.CODE_NAME
+		 ORDER BY OWE_CHARGE
+    </select>
+</mapper>

@@ -1,0 +1,51 @@
+/*-------------------------------------
+ *FileName：table.css
+ *Author：hechuan
+ *Description： global css 自定义表格样式
+ *Date:2016-08-08
+ *Version： V1.0
+-------------------------------------*/
+/*---------表格样式---------*/
+.table_module{height:75%;width: 100%;overflow: auto;margin-top:12px;}
+.custom_table{height:auto;width:100%;margin:0px;padding: 0px;}
+.custom_table thead{font-weight: 450 !important;font-size: 15px;color:#efcc66}
+.custom_table thead tr th{height: 26px;line-height:26px;}
+.custom_table thw_15{width:15%;}
+.custom_table thw_20{width:20%;}
+.custom_table thw_45{width:45%;}
+.custom_table tbody{font-size: 14px;color:#d0bc80;}
+.custom_table tbody tr td{line-height: 24px;height: 24px;}
+.custom_table tbody tr:hover{background: gray !important;}
+
+.custom_table_new{height:auto;width:100%;margin:0px;padding: 0px;}
+.custom_table_new thead{font-weight: 500 !important;;font-size: 15px;color:#efcc66}
+.custom_table_new thead tr th{height: 34px;line-height:34px;}
+.custom_table_new thw_15{width:15%;}
+.custom_table_new thw_20{width:20%;}
+.custom_table_new thw_45{width:45%;}
+.custom_table_new tbody{font-size: 14px;color:#fce9b1}
+.custom_table_new tbody tr td{line-height: 32px;height: 32px;}
+.custom_table_new tbody tr:hover{background: gray !important;}
+
+.custom_table_24{height:auto;width:100%;margin:0px;padding: 0px;}
+.custom_table_24 thead{font-weight: 500 !important;;font-size: 14px;color:#efcc66}
+.custom_table_24 thead tr th{height: 26px;line-height:26px;}
+.custom_table_24 thw_15{width:15%;}
+.custom_table_24 thw_20{width:20%;}
+.custom_table_24 thw_45{width:45%;}
+.custom_table_24 tbody{font-size: 14px;color:#d0bc80;}
+.custom_table_24 tbody tr td{line-height: 24px;height: 24px;}
+.custom_table_24 tbody tr:hover{background: gray !important;}
+
+.custom_table_s{height:auto;width:100%;margin:0px;padding: 0px;font-size:14px !important;color: black;}
+.custom_table_s thead{font-weight: 500 !important;;font-size: 14px;color:#efcc66;}
+.custom_table_s thead tr th{height: 32px;line-height:32px;vertical-align: middle;}
+.custom_table_s tbody{font-size: 14px;}
+.custom_table_s tbody tr td{line-height: 28px;height: 28px;vertical-align: middle;text-align:left;}
+.custom_table_s tbody tr td:nth-child(1){text-align:center;color: white;}
+.custom_table_s tbody tr td:last-child{text-align:center;}
+
+.sys_table,.sys_table tr,.sys_table th,.sys_table td {border-collapse:collapse;font-size: 12px;  color: #fce9b1; line-height: 28px; text-align:center;}
+.sys_table thead tr th{background: rgba(0,0,0,0.3); color: #fff;line-height: 35px;}
+.sys_table tbody tr:hover{background: gray !important;}
+

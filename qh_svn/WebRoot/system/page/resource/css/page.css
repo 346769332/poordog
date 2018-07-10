@@ -1,0 +1,60 @@
+/*-------------------------------------
+ *FileName：style.css
+ *Author：hechuan
+ *Description： 各个页面特殊样式
+ *Date:2016-08-08
+ *Version： V1.0
+-------------------------------------*/
+.sys_z_border{background: url('../images/sys_z_border.png') no-repeat;background-size:100% 100%;}
+.sys_z1_border{background: url('../images/sys_z1_border.png') no-repeat;background-size:100% 100%;}
+.sys_h_border{background: url('../images/sys_h_border.png') no-repeat;background-size:100% 100%;}
+.sys_h1_border{background: url('../images/sys_h1_border.png') no-repeat;background-size:100% 100%;}
+.sys_title_bg_line{background: url("../images/sys_title_bg_line.png") no-repeat center center; line-height: 40px; text-align: center;}
+.sys_ww_border{background: url('../images/sys_ww_border.png') no-repeat;background-size:100% 100%;}
+.pb_2_4{padding: 2% 4%!important;}
+.other_title{color: #3166f2 !important;}
+/*-----------翼商联盟特殊样式---------------*/
+.ys_jy_border{background: url('../images/ys_jy_border.png') no-repeat;background-size:100% 100%;}
+.ys_dt_border{background: url('../images/ys_dt_border.png') no-repeat;background-size:100% 100%;}
+.ys_wt_border{background: url('../images/ys_wt_border.png') no-repeat;background-size:100% 100%;}
+.ys_dt_bg{background: url('../images/ys_dt_bg.png') no-repeat;background-size:100% 100%;}
+.ys_details{width: 88%;height: 29%;background: rgba(12,42,96,0.8);padding: 8px 16px;margin: 8px 20px;}
+.ys_details .title{border-bottom: 1px solid gray;height: 70px;}
+.ys_details .title_name{width: 100%;font-weight: bold;color: #fcfcfc;font-size: 16px;color: #fcfcfc;height: 24px;line-height: 24px;text-align: center;vertical-align: middle;}
+.ys_details .title_text{margin-top: 8px;width: 48%;font-size: 12px;color: #fcfcfc;height: 28px;}
+.ys_details .flag{color:#ffff00;width: 14px;display: block;float: left;height: 28px;line-height: 28px;text-align: left;vertical-align: middle;}
+.ys_details .text{display: block;float: left;width: 90%;font-size: 12px;color: #fcfcfc;height: 14px;line-height: 14px;text-align: left;vertical-align: middle;}
+.ys_details .num{color:#2aa5c7;}
+.ys_table_row{margin: 16px 8px;display: table;overflow: hidden;}
+.ys_table_row_bk{background: rgba(16,37,68,0.6);}
+.ys_table_row_br{border-bottom: 1px solid #2aa5c7;}
+.ys_other{background: #3166f2 !important;}
+.ys_table_row .sort_num{margin: 0px auto;display: block;font-size: 14px;vertical-align: middle;text-align: center;}
+.ys_table_row .h24{line-height: 24px;width: 24px;height: 24px;}
+.ys_table_row .h32{line-height: 32px;width: 32px;height: 32px;}
+.ys_table_row .h64{line-height: 64px;width: 24px;height: 64px;}
+.ys_table_row .br4{border-radius: 4px;background: #c09626;}
+.ys_table_row .shop_name{color: #94c9fd;font-size: 14px;}
+.ys_table_row .shop_val{text-align: center;font-size: 13px;color: #3373d4;}
+.ys_table_row .yellow{color: #c09626;}
+/*---------青海本地网介绍样式---------*/
+.p-0-4{padding: 0 4%!important;}
+.gk_r_border{background: url('../images/ys-jy-rborder.png') no-repeat;background-size:100% 100%;}
+.in_con{padding: 10px;overflow: auto;}
+.in_con h3{color: #7fcee6;line-height: 40px; font-size: 16px; font-weight:100;}
+.in_con span{color: #eee734;}
+.in_con p{color: #2da3c7;line-height: 24px; text-indent: 24px;}
+.jgt-box{background: url("../images/gk-jgt-pic.png") no-repeat; background-size: 100% 100%;}
+.zhibiao h2{background: #2188a7; line-height: 45px; color: #fff;text-align: center; margin-top: 15px;}
+.h_23{height:23% !important;}
+.h_46{height:46% !important;}
+
+/*导航标题*/
+.headTitle1{background:url("../images/head_title.png") no-repeat; background-size:100% 100%;width: 50%;height: 32px; margin:0px auto;line-height: 32px;text-align: center;vertical-align: middle;}
+.headTitle1 a{font-size: 18px;color: #2da3c7;}
+.headTitle1 a:hover{font-weight: bold;}
+/*节日专题1*/
+.fs_select_title{color: #fcfcfc;font-size: 15px;width: 100%;height: 48px;line-height: 48px;vertical-align: middle;text-align: center;}
+.fs_select_title a{padding:4px 16px;height: 32px;border-radius: 8px;;line-height: 32px;width: 64px;vertical-align: middle;text-align: center;color: #fcfcfc;}
+.fs_select_title .checked{font-weight: bold;background: rgb(247,63,63) !important;}
+.fs_select_title a:hover{font-weight: bold;background: rgb(247,63,63)!important;}

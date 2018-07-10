@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" 
+	xmlns="http://java.sun.com/xml/ns/javaee" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+	http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+  	<display-name>lss</display-name>
+	<description>Large Screen System</description>	
+    <!-- ==========================================加载初始配置文件========================================== -->
+    <!-- Spring和mybatis的配置文件 -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:config/applicationContext.xml</param-value>
+    </context-param>
+    <!-- logback配置文件 -->
+    <context-param>
+		<param-name>logbackConfigLocation</param-name>
+		<param-value>classpath:config/logback.xml</param-value>
+ 	</context-param>
+    <!-- =============================================过滤器配置============================================ -->
+    <!-- 编码过滤器 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <!-- 请求中的参数特殊字符过滤 -->
+    <filter>
+		<filter-name>specialSymbolFilter</filter-name>
+		<filter-class>com.frame.core.filter.SpecialSymbolFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>specialSymbolFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+    <!-- 访问过滤 -->
+	<filter>
+		<description>对所有请求进行验证以及session过滤</description>
+		<filter-name>accessFilter</filter-name>
+		<filter-class>com.frame.core.filter.AccessFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>accessFilter</filter-name>
+		<url-pattern>*.do</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>accessFilter</filter-name>
+		<url-pattern>/system/page/*</url-pattern>
+	</filter-mapping>
+    <!-- 请求权限过滤 -->
+    <!-- 
+	<filter>
+		<description>判断请求是否有权限</description>
+		<filter-name>requestFilter</filter-name>
+		<filter-class>com.frame.core.filter.RequestFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>requestFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping> -->
+    <!-- =============================================监听器配置============================================ -->
+    <!-- 
+    <listener>
+    	<listener-class>com.frame.core.listener.LogbackListener</listener-class>
+	</listener> -->
+    <!-- Spring监听器 -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    <!-- 注册Spring的request作用域 -->
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+    <!-- 防止Spring内存溢出监听器 -->
+    <listener>
+        <listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+    </listener>
+    <!-- =============================================servlet配置============================================ -->
+    <!-- Spring MVC servlet -->
+    <servlet>
+        <servlet-name>SpringMVC</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:config/spring-mvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SpringMVC</servlet-name>
+        <!-- 此处可以可以配置成*.do，对应struts的后缀习惯 -->
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+    <!-- 应用启动数据库连接检测 -->
+    <servlet>
+		<servlet-name>WebStartServlet</servlet-name>
+		<servlet-class>com.frame.core.servlet.WebStartServlet</servlet-class>
+		<load-on-startup>10</load-on-startup>
+	</servlet>
+    <!-- =============================================其他页面配置============================================ -->
+    <welcome-file-list>
+        <welcome-file>/system/login/login.jsp</welcome-file>
+    </welcome-file-list>
+    <error-page>
+    	<error-code>400</error-code>
+    	<location>/system/error/error_400.jsp</location>
+    </error-page>
+    <error-page>
+    	<error-code>404</error-code>
+    	<location>/system/error/error_404.jsp</location>
+    </error-page>
+    <error-page>
+    	<error-code>500</error-code>
+    	<location>/system/error/error_500.jsp</location>
+    </error-page>
+    <error-page>
+    	<error-code>503</error-code>
+    	<location>/system/error/error_503.jsp</location>
+    </error-page>
+</web-app>

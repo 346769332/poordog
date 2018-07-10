@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="income">
+	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+	</select>
+ 	<!-- 产品收入分析 -->
+	<select id="getProductInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.INDI_NAME product_type, 
+		       SUM(A.ADD_CHARGE) add_charge
+		  FROM TB_LARGE_INCOME A,
+		       TB_LARGE_AREA F
+		 WHERE A.INDI_ID = '2'
+		   AND A.AREA = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_LARGE_INCOME)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.INDI_NAME
+		 ORDER BY add_charge DESC
+    </select>
+    <!-- 按账目类型分析收入 -->
+    <select id="getAccountInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT replace(A.INDI_NAME,'收入','') income_type,
+		       SUM(A.ADD_CHARGE) add_charge
+		  FROM TB_LARGE_INCOME A,
+		       TB_LARGE_AREA F
+		 WHERE A.INDI_ID = '1'
+		   AND A.AREA = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_LARGE_INCOME)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.INDI_NAME
+		 ORDER BY add_charge DESC
+    </select>
+    <!-- 当月收入趋势与上月对比 -->
+    <select id="getContrastsInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.DAY_ID,
+		       round(SUM(A.ADD_CHARGE)/10000,2) last_charge,
+		       round(NVL(SUM(B.ADD_CHARGE), 0)/10000,2) add_charge
+		  FROM (SELECT SUBSTR(A.DAY_ID, 7, 2) DAY_ID,
+		               A.LATN,
+		               A.AREA,
+		               SUM(A.ADD_CHARGE) ADD_CHARGE
+		          FROM TB_LARGE_INCOME A
+		         WHERE A.INDI_ID = '2'
+		           AND SUBSTR(A.DAY_ID, 1, 6) =
+		               TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'YYYYMM')
+		           AND SUBSTR(A.DAY_ID, 7, 2) BETWEEN 1 AND 31
+		         GROUP BY SUBSTR(A.DAY_ID, 7, 2), A.LATN, A.AREA) A,
+		       (SELECT SUBSTR(B.DAY_ID, 7, 2) DAY_ID,
+		               B.LATN,
+		               B.AREA,
+		               SUM(B.ADD_CHARGE) ADD_CHARGE
+		          FROM TB_LARGE_INCOME B
+		         WHERE B.INDI_ID = '2'
+		           AND SUBSTR(B.DAY_ID, 1, 6) IN
+		               (SELECT SUBSTR(MAX(DAY_ID), 1, 6)
+		                  FROM TB_LARGE_INCOME)
+		           AND SUBSTR(B.DAY_ID, 7, 2) BETWEEN 1 AND 31
+		         GROUP BY SUBSTR(B.DAY_ID, 7, 2), B.LATN, B.AREA) B,
+		       TB_LARGE_AREA F
+		 WHERE A.AREA = F.AREA_ID
+		   AND A.AREA = B.AREA(+)
+		   AND A.DAY_ID = B.DAY_ID(+)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.DAY_ID
+		 ORDER BY A.DAY_ID
+    </select>
+</mapper>

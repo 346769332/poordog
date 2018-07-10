@@ -1,0 +1,94 @@
+*{ padding:0px; margin:0px;}
+html,body{ width:100%; height:100%;/*width:1920px; height: 1080px;*/}
+body{ background: url("../images/bg_new.png") no-repeat; background-size: 100% 100%; color: #fff3cf; font-family: "微软雅黑"; font-size: 14px;}
+h1,h2,h3,h4,h5,h6{font-size:100%;font-style:inherit;}
+input,select,button,textarea{ margin:0; padding:0; color:#585858;}
+input,select,button,img{vertical-align:middle;}
+textarea{ width:100%; padding:5px; line-height:26px;}
+ul,li{list-style-type:none;}textarea{resize:none;}
+p,a,span{word-break:break-all;word-wrap:break-word;white-space:normal;}
+a,a img,button,select {cursor:pointer;} a {color:#585858;text-decoration:none;}
+a:focus,input:focus,button:focus,select:focus,textarea:focus{outline:none;}
+a:hover{color:#000; text-decoration:none;}
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; overflow: hidden; }
+.clearfix { zoom: 1; /* for IE6 IE7 */ }
+.clear { clear: both; display: block; overflow: hidden; height: 0; line-height: 0; font-size: 0; }
+.fl{float:left;}
+.fr{float:right;}
+.mt30{ margin-top: 30px;}
+.mt60{ margin-top: 80px;}
+.mt10{margin-top: 10px;}
+.mt20{margin-top: 20px;}
+.text-center{text-align: center;}
+
+.top{width: 100%;height: 60%;overflow: hidden;position: relative;}
+.bottom{width: 80%;height: 15%;overflow: hidden;padding: 0px 10%;}
+.top-con,.top-con img,.top-bg img{position: absolute;}
+.top-bg{z-index:1;}
+.top_bg1{left: 0;top:10px;}
+.top_bg2{right: 0;top:10px;}
+.top_bg3{left: 0;bottom:0px;}
+.top_bg4{right: 0;bottom:0px;}
+
+.top-con{z-index:2;width: 88%;height:90%;left: 6%;top:10%;}
+.top-left,.top-right{position: absolute;top:8%;z-index: 96; height: 60%;}
+.top-left{width: 30%; left: 3%;}
+.top-right{width: 60%;right: 3%; }
+.ditu img{position: absolute;z-index: 70;top:10%;}
+.title h1,.title{position: absolute; width: 40%; left: 30%;top:0px;}
+.title h1 small{font-size: 14px;}
+.title h1{width:100%; text-align:center;position: absolute;z-index: 68; line-height: 50px; font-size: 24px;left: 0;}
+.title img{position: absolute;}
+.title-line{left: 45px; top:62px;}
+
+
+
+.top-right{border:1px solid #6dd1f5;}
+.code_tab{display: block;width: 100%; background: #467f9c;padding: 2px 0px;}
+.code_tab li{ float: left; cursor: pointer;text-align: center;width: 132px;height: 42px; color: #fff; line-height: 42px; }
+.code_tab li.checked{ background: url("../images/nav-bg.png"); color: #fff;}
+.code_con{ padding: 10px;}
+.code_cons{line-height: 26px;color: #fff;height: auto;max-height: 200px; overflow-y: scroll;}
+.code_cons p{text-indent: 24px; margin-bottom: 10px;}
+.code_cons h2{text-align: center; line-height: 40px; color: #6dd1f5; font-size: 16px;}
+::-webkit-scrollbar {
+    width: 2px;
+} /* 这是针对缺省样式 (必须的) */
+::-webkit-scrollbar-track {
+    background-color: #467f9c;
+} /* 滚动条的滑轨背景颜色 */
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+} /* 滑块颜色 */
+
+::-webkit-scrollbar-button {
+    background-color: #467f9c;
+} /* 滑轨两头的监听按钮颜色 */
+
+::-webkit-scrollbar-corner {
+    background-color: black;
+} /* 横向滚动条和纵向滚动条相交处尖角的颜色 */
+
+
+.fzl-box{width:230px;height:124px;position: absolute; z-index: 80;left: 42.7%;bottom: 0px;}
+.fzl-pic1{position: absolute;z-index: 89;}
+.fzl-pic2{position: absolute;z-index: 90;}
+.fzl-zi{position: absolute; z-index: 91;left:4px; bottom: 10px;width: 92%; text-align:center; font-size: 24px;}
+
+.tj{width: 100%;margin-top: 20px;}
+.tj-box{width:20%;margin:10px 2%;background: url("../images/tj-bg.png") no-repeat; background-size: 100% 100%; line-height: 51px;}
+.tj-box div{width: 50%;text-align: center;float: left;color: #2da3c7;}
+/*.tj-box div span{background: #2da3c7;padding: 5px 5px;margin-right: 1px;color: #fff;}*/
+
+.fl-con{width: 31%; position: relative;margin: 60px 2%;}
+.fl-baob,.fl-tu1,.fl-tu2{position: absolute;}
+.fl-tu1{z-index: 90;}
+.fl-baob{z-index: 92;}
+.fl-pic{border: 1px solid #2da3c7;background: #16304c;width:30%;padding:0px;margin-right: 2%; }
+.fl-pic img{width: 100%;}
+/*---------滚动数字样式---------*/
+.roll_num{ width:100%;height:32px;float:left;text-align:center;position:relative;margin-top:10px;}
+.roll_num .num{height:32px;margin:0px; background:url(../images/num_b_bk.png) no-repeat; display:inline-block; text-align:center; padding-left:0px; padding-right:0px; line-height:32px; color:#FFFFFF;}
+.num i{width:16px;height:30px; display:inline-block; background: url(../images/num_30_new.png) no-repeat;margin-right: 0px;margin-left: 0px;border-left:1px solid #000000; background-position:0 0;}

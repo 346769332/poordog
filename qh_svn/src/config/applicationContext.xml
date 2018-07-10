@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>   
+<beans 
+	xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:jee="http://www.springframework.org/schema/jee"  
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    					http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    				    http://www.springframework.org/schema/tx
+    				    http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    				    http://www.springframework.org/schema/aop
+    				    http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+    				    http://www.springframework.org/schema/jee
+    				    http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+    				    http://www.springframework.org/schema/context
+    				    http://www.springframework.org/schema/context/spring-context-4.0.xsd"
+    default-lazy-init="true">  	
+    <!-- 查找weblogic中配置的数据源 -->    
+    <jee:jndi-lookup id="oracleDB" jndi-name="jdbc/lss"></jee:jndi-lookup>
+    <!-- 数据库配置文件位置 sj
+	<context:property-placeholder location="classpath:config/jdbc.properties" />
+	-->
+	<aop:aspectj-autoproxy proxy-target-class="true" />	
+	<!-- Activates annotation-based bean configuration 
+	<context:annotation-config />-->
+	<!-- Scans for application @Components to deploy -->
+	<context:component-scan base-package="com.system.**.service" />	
+    <!-- oracle数据源 
+    <bean id="oracleDB" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+	    <property name="driverClass" value="oracle.jdbc.driver.OracleDriver" />
+	    <property name="jdbcUrl" value="jdbc:oracle:thin:@135.192.69.80:1521/odstestdb" />
+	    <property name="user" value="pu_dmdata" />
+	    <property name="password" value="pub_qhods" />
+	    <property name="autoCommitOnClose" value="true" />
+	    <property name="initialPoolSize" value="2" />
+	    <property name="minPoolSize" value="2" />
+	    <property name="maxPoolSize" value="5" />
+		<property name="loginTimeout" value="1000" />
+		<property name="maxStatements" value="50" />
+		<property name="maxIdleTime" value="1800" />
+		<property name="acquireRetryAttempts" value="5" />
+    	<property name="breakAfterAcquireFailure" value="true" />
+	</bean>-->
+	<bean id="orcaleSQLSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="oracleDB" />
+		<property name="configLocation" value="classpath:config/mybatis-config.xml" />
+		<property name="mapperLocations" value="classpath:com/system/**/model/*_oracle.xml" />
+	</bean>
+    <!-- orcle SqlSessionTemplate模版 -->
+    <bean id="oracleClient" class="org.mybatis.spring.SqlSessionTemplate" scope="prototype" lazy-init="false">
+		<constructor-arg index="0" ref="orcaleSQLSessionFactory" />
+    </bean>
+    <!-- (事务管理)transaction manager -->  
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
+        <property name="dataSource" ref="oracleDB" />
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+</beans>

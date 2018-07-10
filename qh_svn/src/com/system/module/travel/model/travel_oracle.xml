@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="travel">
+ 	<!-- 漫入用户省份分布信息 -->
+	<select id="getUserProviceInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+		       CASE
+		         WHEN A.PROV_NAME NOT LIKE '内蒙古%' AND
+		              A.PROV_NAME NOT LIKE '黑龙江%' THEN
+		          SUBSTR(A.PROV_NAME, 1, 2)
+		         ELSE
+		          SUBSTR(A.PROV_NAME, 1, 3)
+		       END PROV_NAME,
+		       USER_COUNT,
+		       ROUND(STAY_TIMES / USER_COUNT,2) AVG_STAY_TIMES,
+		       decode(START_LATN,'格尔木本地网','格尔木',SUBSTR(START_LATN,1,2)) START_LATN,
+		       decode(END_LATN,'格尔木本地网','格尔木',SUBSTR(END_LATN,1,2)) END_LATN
+		  FROM (SELECT PROV_NAME,
+		  			   ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN,
+		               SUM(USER_COUNT) USER_COUNT,
+		               MAX(CASE
+		                     WHEN START_LATN_RN = 1 THEN
+		                      START_LATN
+		                     ELSE
+		                      NULL
+		                   END) START_LATN,
+		               MAX(CASE
+		                     WHEN END_LATN_RN = 1 THEN
+		                      END_LATN
+		                     ELSE
+		                      NULL
+		                   END) END_LATN
+		          FROM (SELECT PROV_NAME,
+		                       COUNT(1) USER_COUNT,
+		                       START_LATN,
+		                       END_LATN,
+		                       ROW_NUMBER() OVER(PARTITION BY PROV_NAME ORDER BY COUNT(1) DESC) START_LATN_RN,
+		                       ROW_NUMBER() OVER(PARTITION BY PROV_NAME ORDER BY COUNT(1) DESC) END_LATN_RN
+		                  FROM TB_LARGE_SCREEN_MR_TRAVEL_LINE A
+		                 WHERE EXISTS
+		                 (SELECT 1
+		                          FROM TB_LARGE_USER_AREA_REL F,
+		                               TB_LARGE_AREA          G
+		                         WHERE (A.START_LATN = G.NAME OR A.END_LATN = G.NAME)
+		                           AND G.ZONE_NUMBER = F.LATN_ID
+		                           AND G.AREA_LEVEL = 3
+								<if test="latnName!=null and latnName!=''">
+		                           AND G.NAME = #{latnName}
+								</if>
+		                           AND F.USER_ID = #{userId})
+		                 GROUP BY PROV_NAME, START_LATN, END_LATN) T
+		         GROUP BY PROV_NAME) A,
+		       (SELECT PROV_NAME, SUM(STAY_TIMES) STAY_TIMES
+		          FROM TB_LARGE_SCREEN_MR_LIST A, TB_LARGE_AREA F
+		         WHERE A.LATN_ID = F.ZONE_NUMBER
+		           AND F.AREA_LEVEL = 3
+				<if test="latnName!=null and latnName!=''">
+		           AND F.AREA_NAME = #{latnName}
+				</if>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+		         GROUP BY PROV_NAME) B
+		 WHERE A.PROV_NAME = B.PROV_NAME
+		   AND RN &lt; 12
+    </select>
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+    </select>
+ 	<!-- 本地网旅游热线信息 -->
+	<select id="getLocalHotLineInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+		       replace(SCENIC_LINE,',','-') line_name,
+		       USER_COUNT roam_in_count,
+		       ROUND(USER_COUNT*100/ALL_USER,2) ratio
+		  FROM (SELECT SCENIC_LINE,
+		               JW_LINE,
+		               COUNT(1) USER_COUNT,
+		               ROW_NUMBER() OVER(ORDER BY COUNT(1) DESC) RN
+		          FROM TB_LARGE_SCREEN_MR_TRAVEL_LINE A
+		         WHERE EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F,
+		                       TB_LARGE_AREA          G
+		                 WHERE (A.START_LATN = G.NAME OR A.END_LATN = G.NAME)
+		                   AND G.ZONE_NUMBER = F.LATN_ID
+		                   AND G.AREA_LEVEL = 3
+						<if test="latnName!=null and latnName!=''">
+		                   AND G.NAME = #{latnName}
+						</if>
+		                   AND F.USER_ID = #{userId})
+		         GROUP BY SCENIC_LINE, JW_LINE) A,
+		       (SELECT COUNT(1) ALL_USER
+		          FROM TB_LARGE_SCREEN_MR_TRAVEL_LINE A
+		         WHERE EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F,
+		                       TB_LARGE_AREA          G
+		                 WHERE (A.START_LATN = G.NAME OR A.END_LATN = G.NAME)
+		                   AND G.ZONE_NUMBER = F.LATN_ID
+		                   AND G.AREA_LEVEL = 3
+						<if test="latnName!=null and latnName!=''">
+		                   AND G.NAME = #{latnName}
+						</if>
+		                   AND F.USER_ID = #{userId})) B
+		 WHERE RN &lt; 11
+    </select>
+ 	<!-- 旅游热线信息 -->
+	<select id="getTravelHotLineInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+		       replace(SCENIC_LINE,',','-') line_name,
+		       USER_COUNT roam_in_count,
+		       ROUND(USER_COUNT*100/ALL_USER,2) ratio
+		  FROM (SELECT SCENIC_LINE,
+		               JW_LINE,
+		               COUNT(1) USER_COUNT,
+		               ROW_NUMBER() OVER(ORDER BY COUNT(1) DESC) RN
+		          FROM TB_LARGE_SCREEN_MR_TRAVEL_LINE
+		         GROUP BY SCENIC_LINE, JW_LINE) A,
+		       (SELECT COUNT(1) ALL_USER
+		          FROM TB_LARGE_SCREEN_MR_TRAVEL_LINE) B
+		 WHERE RN &lt; 4
+    </select>
+	<!-- 最近30天漫入用户信息 -->
+	<select id="getLastRoamInInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT DATE_NO,
+		       COUNT(DISTINCT ACC_NBR) sum_num
+		  FROM TB_LARGE_SCREEN_MR_LIST A, TB_LARGE_AREA F
+		 WHERE A.LATN_ID = F.ZONE_NUMBER
+		   AND F.AREA_LEVEL = 3
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		   AND DATE_NO > TO_CHAR(SYSDATE-31,'YYYYMMDD')
+		<if test="latnName!=null and latnName!=''">
+		   AND F.AREA_NAME = #{latnName}
+		</if>
+		 GROUP BY DATE_NO
+	</select>
+	<!-- 景点排行 -->
+	<select id="getScenicRankInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(ORDER BY COUNT(DISTINCT A.ACC_NBR) DESC) RN,
+		               A.BELONG_SCENIC,
+		               COUNT(DISTINCT A.ACC_NBR) user_count,
+		               ROUND(SUM(STAY_TIMES) / COUNT(DISTINCT A.ACC_NBR), 2) stay_times
+		          FROM TB_LARGE_SCREEN_MR_LIST A,
+		               (select distinct latn_id
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE F.USER_ID = #{userId}) F
+		         WHERE A.LATN_ID = F.LATN_ID 
+				<if test="latnName!=null and latnName!=''">
+		           AND F.AREA_NAME = #{latnName}
+		        </if>
+		           AND A.IF_SCENIC = 1
+		         GROUP BY A.BELONG_SCENIC)
+		 WHERE RN &lt; 12
+	</select>
+	<!-- 本地网排行 -->
+	<select id="getLocalUserInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT ROW_NUMBER() OVER(ORDER BY COUNT(DISTINCT A.ACC_NBR) DESC) rn,
+		       A.LATN_NAME,
+		       COUNT(DISTINCT A.ACC_NBR) user_count,
+		       ROUND(SUM(STAY_TIMES) / COUNT(DISTINCT A.ACC_NBR), 2) stay_times
+		  FROM TB_LARGE_SCREEN_MR_LIST A,
+		       (select distinct latn_id
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE F.USER_ID = #{userId}) F
+		 WHERE A.LATN_ID = F.LATN_ID
+		<if test="latnName!=null and latnName!=''">
+           AND F.AREA_NAME=#{latnName}
+        </if>
+		 GROUP BY LATN_NAME
+	</select>
+</mapper>

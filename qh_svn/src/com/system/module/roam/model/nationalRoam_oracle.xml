@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nationalRoam">
+ 	<!-- 漫游信息 -->
+	<select id="getRoamInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT 'in' roam_type,
+		       RN,
+		       CASE
+		         WHEN ROAM_PROV_NAME NOT LIKE '内蒙古%' AND
+		              ROAM_PROV_NAME NOT LIKE '黑龙江%' THEN
+		          SUBSTR(ROAM_PROV_NAME, 1, 2)
+		         ELSE
+		          SUBSTR(ROAM_PROV_NAME, 1, 3)
+		       END prov_name,
+		       USER_NUM user_count
+		  FROM (SELECT DATE_NO,
+		               FLAG,
+		               USER_PROV_NAME ROAM_PROV_NAME,
+				<choose>
+					<when test="queryType=='month'">
+		               SUM(NVL(USER_NUM_MONTH,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM_MONTH,0)) DESC) RN
+					</when>
+					<when test="queryType=='week'">
+		               SUM(NVL(USER_NUM_7,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM_7,0)) DESC) RN
+					</when>
+					<otherwise>
+		               SUM(NVL(USER_NUM,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM,0)) DESC) RN
+					</otherwise>
+				</choose>
+		          FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		         WHERE FLAG IN (1)
+		           AND DATE_NO = (SELECT MAX(DATE_NO)
+		                            FROM DM_OSS_VISIT_OTHER_AREA_DAY
+		                           WHERE VISIT_LATN_NAME NOT LIKE '%未知%')
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = T.VISIT_LATN_ID)
+				</if>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE T.VISIT_LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+		         GROUP BY DATE_NO, FLAG, USER_PROV_NAME) A         
+		UNION 
+		SELECT 'out' roam_type,
+		       RN,
+		       CASE
+		         WHEN ROAM_PROV_NAME NOT LIKE '内蒙古%' AND
+		              ROAM_PROV_NAME NOT LIKE '黑龙江%' THEN
+		          SUBSTR(ROAM_PROV_NAME, 1, 2)
+		         ELSE
+		          SUBSTR(ROAM_PROV_NAME, 1, 3)
+		       END prov_name,
+		       USER_NUM user_count
+		  FROM (SELECT DATE_NO,
+		               VISIT_PROV_NAME ROAM_PROV_NAME,
+				<choose>
+					<when test="queryType=='month'">
+		               SUM(NVL(USER_NUM_MONTH,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM_MONTH,0)) DESC) RN
+					</when>
+					<when test="queryType=='week'">
+		               SUM(NVL(USER_NUM_7,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM_7,0)) DESC) RN
+					</when>
+					<otherwise>
+		               SUM(NVL(USER_NUM,0)) USER_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY DATE_NO ORDER BY SUM(NVL(USER_NUM,0)) DESC) RN
+					</otherwise>
+				</choose>
+		          FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		         WHERE FLAG IN (2)
+		           AND DATE_NO = (SELECT MAX(DATE_NO) FROM DM_OSS_VISIT_OTHER_AREA_DAY)
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = T.USER_LATN_ID)
+				</if>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE T.USER_LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+		         GROUP BY DATE_NO, VISIT_PROV_NAME) A
+    </select>
+</mapper>

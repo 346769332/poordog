@@ -1,0 +1,40 @@
+/*--------------------
+ *FileName：home.css
+ *Author：hechuan
+ *Description： 首页特殊样式
+ *Date:2017-03-02
+ *Version： V2.0
+--------------------*/
+/*----------------------------标题头样式----------------------------*/
+.body_top{width:100%;height:56%;background: url('../images/body_top.png') no-repeat;background-size:100% 100%;padding-top:32px;}
+.body_top .br{width:88%;height:100%;margin-left:86px;background: url('../images/body_top_br.png') no-repeat;background-size:100% 100%;}
+.body_top .bg{width:100%;height:100%;background: url('../images/body_top_bg.png') no-repeat;background-size:100% 100%;}
+.body_top .line{width:100%;height:90%;background: url('../images/body_top_line.png') no-repeat;background-size:100% 100%;}
+.body_top .map{float:left;width:32%;height:92%;margin:24px 0px 0px 24px;background: url('../images/body_top_map.png') no-repeat;background-size:100% 100%;}
+.body_top .introduce{float:right;width:60%;height:72%;margin:32px 32px 8px 0px;border:1px solid #6dd1f5;overflow:hidden;}
+.body_top .user{width:16%;height:24%;margin:0px auto;margin-top:-5%;}
+.body_top .user_bg{margin-left:-3px;width:15%;position:absolute;height:22%;background: url('../images/body_top_user_bg.png') no-repeat;background-size:100% 100%;overflow: hidden;}
+.body_top .user_title{margin-left:3%;width:96%;height:98%;background: url('../images/body_top_user_title.png') no-repeat;background-size:100% 100%;}
+.body_top .user_val{width:80%;height:34px;margin-top:-34px;padding:0px 16px;font-size:10px;overflow: hidden;}
+
+.body_middle{width:100%;height:10%;overflow: hidden;}
+.body_middle .bg{height:90%;width:90%;margin:0px auto;padding:4px 0px;}
+.body_middle .info{width:20%;float: left;margin:20px 2% 0px 2%;background: url('../images/body_middle_info.png') no-repeat; background-size: 100% 100%;height: 52px;line-height: 52px;vertical-align:middle;}
+.body_middle .info_title{float:left;width:45%;text-align: center;color: #2da3c7;}
+.body_middle .title_font_32{height: 32px;font-size: 16px;line-height: 32px;text-align: center;vertical-align: bottom;}
+.body_middle .title_font_20{height: 20px;line-height: 20px;text-align: center;vertical-align: top;font-size: 14px;}
+.body_middle .info_num{width:55%;margin-top:10px;}
+
+.body_bottom{width:100%;height:30%;overflow: hidden;}
+.body_bottom .left{float:left;width:34%;height:100%;margin-left:1%;}
+.body_bottom .center{float:left;width:30%;height:100%;}
+.body_bottom .right{float:right;width:34%;height:100%;margin-right:1%;}
+.body_bottom .content{height:80%;width:90%;padding:20px 5%;}
+.body_bottom .bg{height:60%;width:100%;margin:40px 0px;background: url('../images/body_bottom_bg.png') no-repeat; background-size: 100% 100%;}
+.body_bottom .br{height:100%;width:100%;background: url('../images/body_bottom_br.png') no-repeat; background-size: 100% 100%;}
+.body_bottom .text{height:100%;width:88%;margin:0px auto;}
+.body_bottom .text_l{float:left;height:100%;width:25%;display:table;}
+.body_bottom .text_r{float:right;height:100%;width:25%;display:table;}
+.body_bottom .column{height:100%;width:100%;display:table-cell;vertical-align:middle;}
+.body_bottom .row{height:20px;width:100%;line-height:20px;vertical-align:middle;font-size:12px;overflow: hidden;}
+.body_bottom .graph{height:100%;width:100%;margin-top:-45%;}

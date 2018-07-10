@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="common">
+	<!-- 初始化参数配置 -->
+	<select id="checkConnection" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+    </select>
+	<!-- 归属地查询 -->
+	<select id="regionList" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">       
+ 		SELECT DISTINCT 
+		       AREA_CODE region_id, 
+		       AREA_NAME region_name,
+		       AREA_LEVEL
+		  FROM TB_LARGE_AREA
+		 WHERE AREA_CODE > 1
+		 ORDER BY AREA_LEVEL, AREA_CODE
+    </select>
+	<!-- 角色查询 -->
+	<select id="roleList" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">       
+ 		SELECT DISTINCT
+		       ROLEID role_id, 
+		       ROLENAME role_name
+		  FROM TB_LARGE_ROLE
+		 WHERE ROLEID != 'R_00'
+		 ORDER BY ROLEID
+    </select>
+</mapper>

@@ -1,0 +1,253 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="business">
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.STORE_NBR store_nbr,
+		       A.STORE_NAME store_name,
+		       B.MONTH_YZF_AMOUNT yzf_amount,
+		       A.COORDINATE_ID coordinate_id
+		  FROM DM_LOC_STORE_INFO A,
+		       DM_STORE_INFO_COUNT B,
+		       TB_LARGE_AREA F
+		 WHERE A.AREA_ID = F.AREA_ID
+		   AND A.STORE_NBR=B.STORE_NBR
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		   AND B.DATE_NO=(SELECT MAX(DATE_NO) FROM DM_STORE_INFO_COUNT)
+		 ORDER BY B.MONTH_YZF_AMOUNT DESC
+    </select>
+    <!-- 详细信息 -->
+	<select id="getDetailInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		<choose>
+		  <when test="queryType=='store'">
+		  	SELECT A.STORE_NAME store_name,
+			       A.CONTACT_NAME contact_name,
+			       A.CONTACT_ACCS contact_accs,
+			       A.CLASSIFICATION classification,
+			       A.ADDRESS_NAME address_name,
+			       A.STORE_AREA store_area,
+			       SUM(B.MONTH_DX_COUNT + B.MONTH_YD_COUNT + B.MONTH_LT_COUNT) jfy_count,
+			       SUM(B.MONTH_DX_AMOUNT + B.MONTH_YD_AMOUNT + B.MONTH_LT_AMOUNT) jfy_amount,
+			       SUM(B.MONTH_YZF_COUNT) yzf_count,
+			       SUM(B.MONTH_YZF_AMOUNT) yzf_amount,
+			       SUM(B.MONTH_YD_DEVELOP_NUM) yd_num,
+			       SUM(B.MONTH_KD_DEVELOP_NUM) kd_num,
+			       SUM(B.MONTH_RH_DEVELOP_NUM) rh_num
+			  FROM DM_LOC_STORE_INFO A,
+			       DM_STORE_INFO_COUNT B,
+			       TB_LARGE_AREA F
+			 WHERE A.AREA_ID = F.AREA_ID
+			   AND A.STORE_NBR = B.STORE_NBR
+			   AND B.DATE_NO = (SELECT MAX(DATE_NO) FROM DM_STORE_INFO_COUNT)
+			   AND EXISTS (SELECT 1
+			          FROM TB_LARGE_USER_AREA_REL F
+			         WHERE A.AREA_ID = F.AREA_ID
+			           AND F.USER_ID = #{userId})
+			   AND A.STORE_NAME = #{storeName}
+			 GROUP BY A.STORE_NAME,
+			          A.CONTACT_NAME,
+			          A.CLASSIFICATION,
+			          A.ADDRESS_NAME,
+			          A.STORE_AREA,
+			          A.CONTACT_ACCS
+		  </when>
+		  <otherwise>
+		  	SELECT COUNT(DISTINCT A.STORE_NBR) sum_num,
+			       COUNT(CASE
+			               WHEN TO_CHAR(A.CREATE_DATE, 'YYYYMM') = TO_CHAR(SYSDATE, 'YYYYMM') THEN
+			                A.STORE_NBR
+			               ELSE
+			                NULL
+			             END) cur_new,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 1 THEN
+			              1
+			             ELSE
+			              0
+			           END) yzf_sum,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 1 AND
+			                  TO_CHAR(A.CREATE_DATE, 'YYYYMM') = TO_CHAR(SYSDATE, 'YYYYMM') THEN
+			              1
+			             ELSE
+			              0
+			           END) new_yzf,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 2 THEN
+			              1
+			             ELSE
+			              0
+			           END) jfy_sum,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 2 AND
+			                  TO_CHAR(A.CREATE_DATE, 'YYYYMM') = TO_CHAR(SYSDATE, 'YYYYMM') THEN
+			              1
+			             ELSE
+			              0
+			           END) new_jfy,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 3 THEN
+			              1
+			             ELSE
+			              0
+			           END) sl_sum,
+			       SUM(CASE
+			             WHEN B.ITEM_SPEC_ID = 3 AND
+			                  TO_CHAR(A.CREATE_DATE, 'YYYYMM') = TO_CHAR(SYSDATE, 'YYYYMM') THEN
+			              1
+			             ELSE
+			              0
+			           END) new_sl
+			  FROM DM_LOC_STORE_INFO A,
+			       DM_LOC_STORE_ATTR B,
+			       TB_LARGE_AREA F
+			 WHERE A.AREA_ID = F.AREA_ID
+			   AND A.STORE_NBR = B.STORE_NBR(+)
+			   AND EXISTS (SELECT 1
+			          FROM TB_LARGE_USER_AREA_REL F
+			         WHERE A.AREA_ID = F.AREA_ID
+			           AND F.USER_ID = #{userId})
+			<if test="areaName!=null and areaName!=''">
+			   AND EXISTS (SELECT 1
+			          FROM TB_LARGE_AREA G
+			         WHERE G.AREA_LEVEL = 4
+			           AND G.AREA_NAME = #{areaName}
+			           AND G.AREA_ID = F.AREA_ID)
+			</if>
+			<if test="latnName!=null and latnName!=''">
+			   AND EXISTS (SELECT 1
+			          FROM TB_LARGE_AREA G
+			         WHERE G.AREA_LEVEL = 3
+			           AND G.AREA_NAME = #{latnName}
+			           AND G.AREA_ID = F.PARENT_AREA)
+			</if>
+		  </otherwise>
+		</choose>
+	</select>
+	<!-- 交费易排行信息 -->
+	<select id="getEasyPayRankInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+		       STORE_NAME,
+		       JFY_COUNT,
+		       JFY_AMOUNT
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(B.MONTH_DX_COUNT + B.MONTH_YD_COUNT + B.MONTH_LT_COUNT) DESC) RN,
+		  			   A.STORE_NAME,
+		               SUM(B.MONTH_DX_COUNT + B.MONTH_YD_COUNT + B.MONTH_LT_COUNT) JFY_COUNT,
+		               SUM(B.MONTH_DX_AMOUNT + B.MONTH_YD_AMOUNT + B.MONTH_LT_AMOUNT) JFY_AMOUNT
+		          FROM DM_LOC_STORE_INFO A,
+		               DM_STORE_INFO_COUNT B,
+		               TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND A.STORE_NBR = B.STORE_NBR
+		           AND B.DATE_NO = (SELECT MAX(DATE_NO) FROM DM_STORE_INFO_COUNT)
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY A.STORE_NAME)
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 翼支付排行信息 -->
+	<select id="getWingPayRankInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+		       STORE_NAME,
+		       YZF_COUNT,
+		       YZF_AMOUNT
+		  FROM (SELECT A.STORE_NAME,
+		               SUM(B.MONTH_YZF_COUNT) YZF_COUNT,
+		               SUM(B.MONTH_YZF_AMOUNT) YZF_AMOUNT,
+		               ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(B.MONTH_YZF_COUNT) DESC) RN
+		          FROM DM_LOC_STORE_INFO A, DM_STORE_INFO_COUNT B, TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND A.STORE_NBR = B.STORE_NBR
+		           AND B.DATE_NO = (SELECT MAX(DATE_NO) FROM DM_STORE_INFO_COUNT)
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY A.STORE_NAME)
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 发展量排行信息 -->
+	<select id="getDevelopRankInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+       		   STORE_NAME,
+       		   YD_NUM,
+       		   KD_NUM,
+       		   RH_NUM
+		  FROM (SELECT A.STORE_NAME,
+		               SUM(B.MONTH_YD_DEVELOP_NUM) YD_NUM,
+		               SUM(B.MONTH_KD_DEVELOP_NUM) KD_NUM,
+		               SUM(B.MONTH_RH_DEVELOP_NUM) RH_NUM,
+		               ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(B.MONTH_YD_DEVELOP_NUM + B.MONTH_KD_DEVELOP_NUM + B.MONTH_RH_DEVELOP_NUM) DESC) RN
+		          FROM DM_LOC_STORE_INFO A, DM_STORE_INFO_COUNT B, TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND A.STORE_NBR = B.STORE_NBR
+		           AND B.DATE_NO = (SELECT MAX(DATE_NO) FROM DM_STORE_INFO_COUNT)
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY A.STORE_NAME)
+		 WHERE RN &lt; 11
+	</select>
+</mapper>

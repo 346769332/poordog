@@ -1,0 +1,84 @@
+/*-------------------------------------
+ *FileName：style.css
+ *Author：hechuan
+ *Description： global css
+ *Date:2016-08-08
+ *Version： V2.0
+-------------------------------------*/
+/*浏览器滚动条设置*/
+/*---------IE滚动条---------*/
+@-ms-viewport {width: device-width;}
+::-webkit-scrollbar{width:1px;height:1px;}
+::-webkit-scrollbar-track-piece{background-color:#ffffff;-webkit-border-radius:2px;}
+::-webkit-scrollbar-thumb:vertical{height:1px;background-color:#666;-webkit-border-radius:2px;}
+::-webkit-scrollbar-thumb:horizontal{width:1px;background-color:#666;-webkit-border-radius:2px;}
+/*页面统一样式*/
+*{margin: 0;padding: 0;}
+html,body{width: 100%;height: 100%;color: #fff3cf;font-size:14px;background-image:url("../images/bg.png");}
+.bk{width:100%;height:100%;position: absolute;z-index:1;}
+.bk_img{background-image:url("../images/bg.png");}
+.body_frame{width:100%;height:100%;position: absolute;z-index:5;top:0px;background: transparent;}
+.page_top{width:100%;position: absolute;padding-top: 10px;z-index:2;}
+.page_title{text-align: center; background: url("../images/page_title.png") no-repeat center top; height: 51px; line-height: 26px; font-size: 14px;}
+.fixed_p{width:1366px;height:auto;margin:auto;pointer-events: none;filter: alpha(opacity=0);}
+.fixed_c{width:1366px;height:auto;margin:auto;}
+.fixed_pt{width:1366px;height:auto;margin:auto;background: url("../images/page_top.png")  repeat-x left 10px;}
+.fixed_b{width:1366px;height:768px;margin:auto;}
+/*-----------------------顶部菜单设置样式-----------------------*/
+.top_menu{width:100%;height:auto;position: absolute;z-index:10;top:0px;color:white;}
+.top_menu_body{width:100%;height: 64px;text-align: center;}
+.top_menu_tip{width:100%;height:16px;background-color:transparent;}
+.top_menu_info{width:82%;height:64px;float:left;background:black;overflow:hidden;} 
+.login_info{width:18%;height:64px;float:right;background:#b85c7d;overflow:hidden;}
+.login_system_info{height: 64px;display:block;width:128px;font-weight: 500;font-size:12px;float: left;text-align: left;overflow: hidden;}
+.login_oper_info{height: 64px;display:block;float: right;text-align: left;overflow: hidden;}
+.login_block{height: 64px;display:table-cell;vertical-align: middle;}
+.login_block label:hover{cursor: pointer;font-weight: 500;color:red;}
+.staff_info{font-weight: 500;font-size: 18px;color:orange;margin-left: 16px;}
+.colse_button{height:32px;width:32px;float: left;border:0px;background:url(../images/close32.png) repeat-x 0 0px;}
+.colse_text{height:32px;line-height:32px;float: right;margin-right:16px;display: block;vertical-align: middle;}
+.lean{display:block;float:right;border-top:64px solid #b85c7d;border-left:64px solid black;width:0;height:0;overflow:hidden;}
+.top_menu_ul{list-style:none;width:auto;height: 64px;float:left;}
+.top_menu_ul li {width:144px;height:32px;float:left;position:relative;font-size:15px;font-weight:500;}
+.top_menu_ul li a{text-decoration:none;display:block;width:112px;height:0px;border-left:32px solid transparent;border-bottom:32px solid #b85c7d;position:relative;text-align:center;}
+.top_menu_ul li a span{display:block;float:left;width:80px;height:31px;line-height:31px;text-align:center;color:white;overflow:hidden;}
+.top_menu_ul li a em{display:block;float:right;border-left:32px solid #b85c7d;border-bottom:32px solid black;width:0px;height:0px;overflow:hidden;}
+/*-----------------------侧面菜单设置样式-----------------------*/
+.page_menu{position: absolute;z-index:10;pointer-events: none;width:100%;top:240px;display:none;}
+.div_table{display:table;border-collapse:separate;float:right;pointer-events:auto;}
+.div_table_row{display:table-row;}
+.div_table_td{display:table-cell;vertical-align: middle;height:auto;}
+.w32{width:32px;}
+.w150{width:150px;}
+.menu_tool{background:rgba(0,0,0,0.4);border-radius:32px 0px 0px 32px;border:0px;width:32px;height:64px;text-align:right;display:table-cell;vertical-align: middle;}
+.menu_tool a{color:#fff;text-decoration:none;font-size: 32px;font-weight:500;margin-right:4px;}
+.menu_tool:hover{background:rgba(0,0,0,0.9);}
+.menu_body{border-radius:10px;width:150px;min-height:128px;height:128px;display:table-cell;vertical-align: middle;background:#242424;}
+.menu_ul{list-style:none;width:144px;margin:16px 3px 16px 3px;font-size: 14px;}
+.menu_ul li{border-bottom:1px solid #b85c7d;}
+.menu_ul li a{text-decoration:none;display:block;width:112px;height:0px;border-left:32px solid transparent;border-bottom:32px solid transparent;position:relative;text-align:center;}
+.menu_ul li a span{display:block;float:left;width:80px;height:31px;line-height:31px;text-align:center;color:white;overflow:hidden;}
+.menu_ul li a em{display:block;float:right;border-left:32px solid transparent;border-bottom:32px solid transparent;width:0px;height:0px;overflow:hidden;}
+ul li a:hover{animation:menu_shake .3s .1s ease both;-webkit-animation:menu_shake .3s .1s ease both;cursor:pointer;border-bottom-color:#00CDCD !important;}
+ul li a:hover span{background:#00CDCD !important;font-weight:500 !important;}
+ul li a:hover em{border-left-color:#00CDCD !important;}
+.menu_ul li a:hover em{border-bottom-color:#242424 !important;}
+/*-----------------------菜单动画---- -webkit-animation:menu_animation 0.5s;-------------------*/
+@-webkit-keyframes menu_roate{
+	0%{-webkit-transform:rotateX(5deg);transform:rotateX(5deg);-webkit-transform-origin: center center;transform-origin: center center;}
+	100%{-webkit-transform:rotateX(360deg);transform:rotateX(360deg);-webkit-transform-origin: center center;transform-origin: center center;}
+}
+@keyframes menu_roate{
+	0%{-webkit-transform:rotateX(5deg);transform:rotateX(5deg);-webkit-transform-origin: center center;}
+	100%{-webkit-transform:rotateX(360deg);transform:rotateX(360deg);-webkit-transform-origin: center center;transform-origin: center center;}
+}
+@-webkit-keyframes menu_shake{
+	0%,90%,100%{-webkit-transform:translateX(0);transform:translateX(0);}
+	10%,30%,50%,70%{-webkit-transform:translateX(-8px);transform:translateX(-8px);}
+	20%,40%,60%,80%{-webkit-transform:translateX(8px);transform:translateX(8px);}
+}
+@keyframes menu_shake{
+	0%,90%,100%{-webkit-transform:translateX(0);transform:translateX(0);}
+	10%,30%,50%,70%{-webkit-transform:translateX(-8px);transform:translateX(-8px);}
+	20%,40%,60%,80%{-webkit-transform:translateX(8px);transform:translateX(8px);}
+}

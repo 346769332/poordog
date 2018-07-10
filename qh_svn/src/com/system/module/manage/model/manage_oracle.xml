@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="manage">
+	<select id="getPhoneNum" parameterType="java.lang.Object" resultType="java.lang.Long">
+		SELECT COUNT(0) ct FROM TB_LARGE_USER  WHERE USERPHONE=#{user_phone}
+	</select>
+ 	<!-- 用户查询 -->
+	<select id="userInfoQuery" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.USERID user_id,
+		       A.ACCT user_acct,
+		       A.NAME user_name,
+		       A.STAFF_CODE login_code,
+		       A.PASSWORD login_pd,
+		       A.USERPHONE user_phone,
+		       nvl(A.REGION_ID,'') region_id,
+		       nvl(D.AREA_NAME,'') region_name,
+		       nvl(C.ROLEID,'') role_id,
+		       nvl(C.ROLENAME,'') role_name
+		  FROM TB_LARGE_USER      A,
+		       TB_LARGE_USER_ROLE B,
+		       TB_LARGE_ROLE      C,
+		       TB_LARGE_AREA      D
+		 WHERE A.USERID = B.USERID(+)
+		   AND B.ROLEID = C.ROLEID(+)
+		   AND A.REGION_ID = D.AREA_CODE(+)
+		<if test="user_id!=null and user_id!=''">
+		   AND A.USERID = #{user_id}
+		</if>
+		<if test="user_name!=null and user_name!=''">
+		   AND A.NAME LIKE '%'||#{user_name}||'%'
+		</if>
+    </select>
+    <!-- 角色查询 -->
+	<select id="roleInfoQuery" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.ROLEID role_id,
+               A.ROLENAME role_name,
+               TO_CHAR(WM_CONCAT(C.MOD_NAME)) menu_list
+          FROM TB_LARGE_ROLE A,
+          	   TB_LARGE_ROLE_MODULE B,
+          	   TB_LARGE_MODULE C
+         WHERE A.ROLEID = B.ROLE_ID(+)
+           AND B.MODULE_ID = C.MODULEID(+)
+           AND A.ROLEID!='R_00'
+		<if test="role_id!=null and role_id!=''">
+		   AND A.ROLEID = #{role_id}
+		</if>
+		<if test="role_name!=null and role_name!=''">
+		   AND A.ROLENAME LIKE '%'||#{role_name}||'%'
+		</if>
+         GROUP BY A.ROLEID, A.ROLENAME
+         ORDER BY A.ROLEID
+    </select>
+    <!-- 用户新增 -->
+	<insert id="userInfoAdd" parameterType="java.lang.Object">
+		<selectKey keyProperty="user_id" order="BEFORE" resultType="Long">
+			SELECT SEQ_TB_LARGE_USER.NEXTVAL FROM DUAL
+		</selectKey>
+		BEGIN
+			INSERT INTO TB_LARGE_USER
+			  (USERID,ACCT,NAME,STAFF_CODE,PASSWORD,USERPHONE)
+			VALUES
+			  (#{user_id},#{user_acct},#{user_name},#{login_code},#{login_pd},#{user_phone});
+		<if test="role_id!=null and role_id!=''">
+			INSERT INTO TB_LARGE_USER_ROLE
+			  (ID,USERID,ROLEID)
+			VALUES
+			  (SEQ_TB_LARGE_USER_ROLE.NEXTVAL,#{user_id},#{role_id});
+		</if>
+		<if test="region_ids!=null and region_ids!=''">
+			INSERT INTO TB_LARGE_USER_AREA_REL(USER_ID,AREA_ID,LATN_ID)
+			SELECT #{user_id},AREA_ID,ZONE_NUMBER
+			  FROM TB_LARGE_AREA
+			 WHERE AREA_ID IN (${region_ids});
+		</if>
+		END;
+    </insert>
+    <!-- 角色新增 -->
+	<insert id="roleInfoAdd" parameterType="java.lang.Object">
+		<selectKey keyProperty="role_id" order="BEFORE" resultType="String">
+			SELECT CASE
+			         WHEN ROLE_ID > 9 THEN
+			          'R_' || ROLE_ID
+			         ELSE
+			          'R_0' || ROLE_ID
+			       END role_id
+			  FROM (SELECT MAX(TO_NUMBER(SUBSTR(ROLEID, 3)))+1 ROLE_ID
+			          FROM TB_LARGE_ROLE)
+		</selectKey>
+		BEGIN
+			INSERT INTO TB_LARGE_ROLE
+			  (ROLEID,ROLENAME,STATUS_CD,CREATE_DATE)
+			VALUES
+			  (#{role_id},#{role_name},10,SYSDATE);
+		<if test="menu_ids!=null and menu_ids!=''">
+			INSERT INTO TB_LARGE_ROLE_MODULE(ID,ROLE_ID,MODULE_ID)
+			SELECT SEQ_TB_LARGE_ROLE_MODULE.NEXTVAL,
+				   #{role_id},
+				   MODULEID
+			  FROM (SELECT MODULEID
+			          FROM TB_LARGE_MODULE
+			         WHERE MODULEID IN (${menu_ids})
+			        UNION
+			        SELECT MODULEID
+			          FROM TB_LARGE_MODULE
+			         WHERE MODULEID IN
+			               (SELECT DISTINCT PARENT_MOD
+			                  FROM TB_LARGE_MODULE
+			                 WHERE MODULEID IN (${menu_ids})));
+		</if>
+		END;
+    </insert>    
+    <!-- 用户修改 -->
+	<update id="userInfoModify" parameterType="java.lang.Object">
+		BEGIN
+			UPDATE TB_LARGE_USER
+			   SET USERID=#{user_id}
+			   <if test="user_acct!=null and user_acct!=''">
+			   	   ,ACCT=#{user_acct}
+			   </if>
+			   <if test="user_name!=null and user_name!=''">
+			   	   ,NAME=#{user_name}
+			   </if>
+			   <if test="login_code!=null and login_code!=''">
+			   	   ,STAFF_CODE=#{login_code}
+			   </if>
+			   <if test="login_pd!=null and login_pd!=''">
+			   	   ,PASSWORD=#{login_pd}
+			   </if>
+			   <if test="user_phone!=null and user_phone!=''">
+			   	   ,USERPHONE=#{user_phone}
+			   </if>
+			 WHERE USERID=#{user_id};
+		<if test="role_id!=null and role_id!=''">
+			DELETE FROM TB_LARGE_USER_ROLE WHERE USERID=#{user_id};
+			INSERT INTO TB_LARGE_USER_ROLE
+			  (ID,USERID,ROLEID)
+			VALUES
+			  (SEQ_TB_LARGE_USER_ROLE.NEXTVAL,#{user_id},#{role_id});
+		</if>
+		<if test="region_ids!=null and region_ids!=''">
+			DELETE FROM TB_LARGE_USER_AREA_REL WHERE USER_ID=#{user_id};
+			INSERT INTO TB_LARGE_USER_AREA_REL(USER_ID,AREA_ID,LATN_ID)
+			SELECT #{user_id},AREA_ID,ZONE_NUMBER
+			  FROM TB_LARGE_AREA
+			 WHERE AREA_ID IN (${region_ids});
+		</if>
+		END;
+    </update>
+    <!-- 角色修改 -->
+	<update id="roleInfoModify" parameterType="java.lang.Object">
+		BEGIN
+			<if test="role_name!=null and role_name!=''">
+			UPDATE TB_LARGE_ROLE
+			   SET ROLENAME=#{role_name}
+			 WHERE ROLEID=#{role_id};
+			</if>
+			<if test="menu_ids!=null and menu_ids!=''">
+			DELETE FROM TB_LARGE_ROLE_MODULE WHERE ROLE_ID=#{role_id};			
+			INSERT INTO TB_LARGE_ROLE_MODULE(ID,ROLE_ID,MODULE_ID)
+			SELECT SEQ_TB_LARGE_ROLE_MODULE.NEXTVAL,
+				   #{role_id},
+				   MODULEID
+			  FROM (SELECT MODULEID
+			          FROM TB_LARGE_MODULE
+			         WHERE MODULEID IN (${menu_ids})
+			        UNION
+			        SELECT MODULEID
+			          FROM TB_LARGE_MODULE
+			         WHERE MODULEID IN
+			               (SELECT DISTINCT PARENT_MOD
+			                  FROM TB_LARGE_MODULE
+			                 WHERE MODULEID IN (${menu_ids})));
+			</if>
+		END;
+    </update>    
+    <!-- 用户删除 -->
+	<delete id="userInfoDelete" parameterType="java.lang.Object">
+		BEGIN
+			DELETE FROM TB_LARGE_USER WHERE USERID=#{user_id};
+			DELETE FROM TB_LARGE_USER_ROLE WHERE USERID=#{user_id};
+			DELETE FROM TB_LARGE_USER_AREA_REL WHERE USER_ID=#{user_id};
+		END;
+    </delete>
+    <!-- 角色删除 -->
+	<delete id="roleInfoDelete" parameterType="java.lang.Object">
+		BEGIN
+			DELETE FROM TB_LARGE_ROLE WHERE ROLEID=#{role_id};
+			DELETE FROM TB_LARGE_ROLE_MODULE WHERE ROLE_ID=#{role_id};
+		END;
+    </delete>
+    <!-- 所有归属地树 -->
+	<select id="getAllRegion" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT DISTINCT
+		       AREA_ID t_code,
+		       NAME t_name,
+		       PARENT_AREA parent_t_code,
+		       AREA_LEVEL - 2 t_level,
+		       'false' checked
+		  FROM TB_LARGE_AREA
+		 WHERE AREA_LEVEL > 2
+		 ORDER BY t_level,parent_t_code,t_code
+    </select>
+    <!-- 用户归属地树 -->
+	<select id="getUserRegion" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT *
+		  FROM (
+		  	  	(SELECT AREA_ID t_code,
+				       NAME t_name,
+				       PARENT_AREA parent_t_code,
+				       AREA_LEVEL - 2 t_level,
+				       'false' checked
+				  FROM TB_LARGE_AREA
+				 WHERE AREA_LEVEL > 2
+		        MINUS
+		        SELECT DISTINCT
+				       A.AREA_ID t_code,
+				       A.NAME t_name,
+				       A.PARENT_AREA parent_t_code,
+				       A.AREA_LEVEL - 2 t_level,
+				       'false' checked
+				  FROM TB_LARGE_AREA A,
+				       TB_LARGE_USER_AREA_REL B
+				 WHERE B.AREA_ID=A.AREA_ID
+				   AND B.USER_ID=#{user_id})
+		        UNION
+		        SELECT DISTINCT
+				       A.AREA_ID t_code,
+				       A.NAME t_name,
+				       A.PARENT_AREA parent_t_code,
+				       A.AREA_LEVEL - 2 t_level,
+				       'true' checked
+				  FROM TB_LARGE_AREA A,
+				       TB_LARGE_USER_AREA_REL B
+				 WHERE B.AREA_ID=A.AREA_ID
+				   AND B.USER_ID=#{user_id})
+		 ORDER BY t_level,parent_t_code,t_code
+    </select>
+    <!-- 所有菜单树 -->
+	<select id="getAllMenu" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT DISTINCT
+		       B.MOD_LEVEL t_level,
+		       B.MODULEID t_code,
+		       B.MOD_NAME t_name,
+		       B.PARENT_MOD parent_t_code,
+		       'false' checked,
+		       B.POSITION
+		  FROM TB_LARGE_MODULE B
+		 ORDER BY t_level,parent_t_code,B.POSITION,t_code
+    </select>
+    <!-- 角色菜单树 -->
+	<select id="getRoleMenu" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT *
+		  FROM (
+			<if test="type=='edit'">
+		  		(SELECT DISTINCT 
+		               MOD_LEVEL t_level,
+		               MODULEID t_code,
+		               MOD_NAME t_name,
+		               PARENT_MOD parent_t_code,
+		               'false' checked,
+		               POSITION
+		          FROM TB_LARGE_MODULE
+		        MINUS
+		        SELECT DISTINCT 
+		               B.MOD_LEVEL t_level,
+		               B.MODULEID t_code,
+		               B.MOD_NAME t_name,
+		               B.PARENT_MOD parent_t_code,
+		               'false' checked,
+		               B.POSITION
+		          FROM TB_LARGE_ROLE_MODULE A, TB_LARGE_MODULE B
+		         WHERE A.MODULE_ID = B.MODULEID
+		           AND A.ROLE_ID = #{role_id})
+		        UNION
+			</if>
+		        SELECT DISTINCT 
+		               B.MOD_LEVEL t_level,
+		               B.MODULEID t_code,
+		               B.MOD_NAME t_name,
+		               B.PARENT_MOD parent_t_code,
+		               'true' checked,
+		               B.POSITION
+		          FROM TB_LARGE_ROLE_MODULE A, TB_LARGE_MODULE B
+		         WHERE A.MODULE_ID = B.MODULEID
+		           AND A.ROLE_ID = #{role_id})
+		 ORDER BY t_level,parent_t_code,POSITION,t_code
+    </select>
+</mapper>

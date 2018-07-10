@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sale">
+	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+	</select>
+ 	<!-- 今日销售套餐信息 -->
+	<select id="getSaleDinnerInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		 SELECT SALE_TYPE sale_type, 
+		 		INDI_NUM sale_value
+		   FROM (SELECT A.OFF_NAME SALE_TYPE,
+		                SUM(A.NUM) INDI_NUM,
+		                ROW_NUMBER() OVER(ORDER BY SUM(A.NUM) DESC) RN
+		           FROM TB_LARGE_OFFER A, TB_LARGE_AREA F
+		          WHERE A.INDI_ID IN (1)
+		            AND A.AREA = F.AREA_ID
+		            AND A.DAY_ID IN (SELECT MAX(DAY_ID)
+		                               FROM TB_LARGE_OFFER
+		                              WHERE INDI_ID IN (1))
+		            AND EXISTS (SELECT 1
+		                   FROM TB_LARGE_USER_AREA_REL F
+		                  WHERE A.AREA = F.AREA_ID
+		                    AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		            AND EXISTS (SELECT 1
+		                   FROM TB_LARGE_AREA G
+		                  WHERE G.AREA_LEVEL = 4
+		                    AND G.AREA_NAME = #{areaName}
+		                    AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		            AND EXISTS (SELECT 1
+		                   FROM TB_LARGE_AREA G
+		                  WHERE G.AREA_LEVEL = 3
+		                    AND G.AREA_NAME = #{latnName}
+		                    AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		          GROUP BY A.OFF_NAME)
+		  WHERE RN &lt; 11
+    </select>
+    <!-- 销量信息 -->
+    <select id="getSaleValumeInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.PRODUCT_ID product_type,
+		       SUM(CASE
+		             WHEN A.INDI_ID = 1 THEN
+		              A.NUM
+		           END) day_fz,
+		       SUM(CASE
+		             WHEN A.INDI_ID = 2 THEN
+		              A.NUM
+		           END) day_cj
+		  FROM TB_LARGE_PRODUCT A, TB_LARGE_AREA F
+		 WHERE A.INDI_ID IN (1, 2)
+		   AND A.AREA = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID)
+		                      FROM TB_LARGE_PRODUCT
+		                     WHERE INDI_ID IN (1, 2))
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.PRODUCT_ID
+    </select>
+    <!-- 4G用户发展量信息 -->
+    <select id="getDevelopUserInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT 
+		<choose>
+		  <when test="(latnName!=null and latnName!='') or (areaName!=null and areaName!='')">
+		       F.NAME region_name,
+		  </when>
+		  <otherwise>
+		       decode(F.NAME, '格尔木本地网','格尔木',substr(F.NAME, 1, 2)) region_name,
+		  </otherwise>
+		</choose>
+		       SUM(A.INDI_NUM) day_value,
+		       0-SUM(A.LAST_INDI_NUM) last_day_value
+		  FROM TB_OTHER_INDI_DATA A,
+		       TB_LARGE_AREA F
+		 WHERE A.INDI_ID = 1
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID)
+		                      FROM TB_OTHER_INDI_DATA
+		                     WHERE INDI_ID = 1)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+	<choose>
+		<when test="(latnName!=null and latnName!='') or (areaName!=null and areaName!='')">
+		   AND A.AREA = F.AREA_ID
+		   AND F.AREA_LEVEL=4
+		  <if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		  </if>
+		  <if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		  </if>
+		</when>
+		<otherwise>
+		   AND A.LATN = F.ZONE_NUMBER
+		   AND F.AREA_LEVEL = 3
+		</otherwise>
+	</choose>
+		 GROUP BY F.NAME
+    </select>
+</mapper>

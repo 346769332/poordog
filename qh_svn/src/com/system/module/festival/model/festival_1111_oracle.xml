@@ -1,0 +1,504 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="festival_1111">
+	<!-- 应用TOP10 -->
+	<select id="getAppInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT APP_NAME,
+			   SUM_COUNT
+		  FROM (SELECT APP_NAME,
+				<choose>
+					<when test="queryType=='flow'">
+		               round(SUM(TRAFFIC)/1024,2) SUM_COUNT,
+		               ROW_NUMBER() OVER(ORDER BY SUM(TRAFFIC) DESC) RN
+					</when>
+					<otherwise>
+		               SUM(USER_NUMBER) SUM_COUNT,
+		               ROW_NUMBER() OVER(ORDER BY SUM(USER_NUMBER) DESC) RN
+					</otherwise>
+				</choose>
+		          FROM TB_LARGE_USER_APP A,
+					   TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+		           AND APP_TYPE = '购物支付'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY APP_NAME)
+		 WHERE RN &lt; 11
+	</select>
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+    </select>
+	<!-- 流量信息 -->
+	<select id="getFlowInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT *
+		  FROM (SELECT 'sum_' || A.LL_TYPE flow_type,
+		               A.DATE_NO,
+		               round(SUM(A.TOTAL_LL)/1024/1024, 2) sum_flow
+		          FROM TB_LARGE_INTERNET A, TB_LARGE_AREA F
+		         WHERE A.LL_TYPE IN (1, 2)
+		           AND A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO BETWEEN to_char(add_months(sysdate,-12),'YYYY')||'1020' AND to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO BETWEEN to_char(sysdate,'YYYY')||'1020' AND to_char(sysdate,'YYYY')||'1115'
+				  </otherwise>
+				</choose>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY A.LL_TYPE, A.DATE_NO
+		        union
+		        SELECT 'avg_' || A.LL_TYPE flow_type,
+		               A.DATE_NO,
+		               ROUND(AVG(AVG_LL), 2) sum_flow
+		          FROM (SELECT LL_TYPE,
+		                       DATE_NO,
+		                       AREA_ID,
+		                       HOUR,
+		                       SUM(TOTAL_LL) / SUM(USERNUMBER) AVG_LL
+		                  FROM TB_LARGE_INTERNET
+		                 WHERE LL_TYPE in (1, 2)
+						<choose>
+						  <when test="dateType=='before'">
+				           AND DATE_NO BETWEEN to_char(add_months(sysdate,-12),'YYYY')||'1020' AND to_char(add_months(sysdate,-12),'YYYY')||'1115'
+						  </when>
+						  <otherwise>
+				           AND DATE_NO BETWEEN to_char(sysdate,'YYYY')||'1020' AND to_char(sysdate,'YYYY')||'1115'
+						  </otherwise>
+						</choose>
+		                 GROUP BY LL_TYPE, DATE_NO, AREA_ID, HOUR
+		                ) A,
+		               TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY A.LL_TYPE, A.DATE_NO)
+		 ORDER BY FLOW_TYPE, DATE_NO
+	</select>
+	<!-- 用户特征信息 -->
+	<select id="getUserInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT B.CODE_NAME,
+		       SUM(A.USERNUMBER) user_count
+		  FROM TB_LARGE_INTERNET A,
+		       TB_LARGE_AREA     F,
+		       TB_LARGE_CODE     B
+		 WHERE A.LL_TYPE = 1
+		   AND A.AREA_ID = F.AREA_ID
+		<choose>
+		  <when test="dateType=='before'">
+           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+		  </when>
+		  <when test="dateType=='after'">
+           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+		  </when>
+		  <otherwise>
+           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+		  </otherwise>
+		</choose>
+		<choose>
+		  <when test="queryType=='age'">
+		   AND B.CODE_TYPE = 'USER_AGE'
+		   AND A.USER_AGE = B.CODE_VALUE
+		  </when>
+		  <otherwise>
+		   AND B.CODE_TYPE = 'USER_SEX'
+		   AND A.USER_SEX = B.CODE_VALUE
+		  </otherwise>
+		</choose>
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>     
+		 GROUP BY B.CODE_NAME
+	</select>
+	<!-- 热词信息 -->
+	<select id="getHotWordInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT CASE
+		         WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		          '食品'
+		         ELSE
+		          HOT_TYPE
+		       END HOT_TYPE,
+		       SUM(USER_COUNT) USER_COUNT
+		  FROM TB_LARGE_USER_KEYWORD A,
+		  	   TB_LARGE_AREA F
+		 WHERE A.AREA_ID = F.AREA_ID
+		<choose>
+		  <when test="dateType=='before'">
+           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+		  </when>
+		  <when test="dateType=='after'">
+           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+		  </when>
+		  <otherwise>
+           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+		  </otherwise>
+		</choose>
+		<if test="queryType!=null and queryType!=''">
+           AND HOT_SOURCE = #{queryType}
+		</if>
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY CASE
+		            WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		             '食品'
+		            ELSE
+		             HOT_TYPE
+		          END
+	</select>
+	<!-- 热词排行 -->
+	<select id="getHotWordRank" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT 'qt' HOT_TYPE,
+			   RN,
+			   KEYWORD
+		  FROM (SELECT KEYWORD, ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_USER_KEYWORD A,
+		               TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+				<if test="queryType!=null and queryType!=''">
+		           AND HOT_SOURCE = #{queryType}
+				</if>
+		           AND CASE
+		                 WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		                  '食品'
+		                 ELSE
+		                  HOT_TYPE
+		               END = '其他'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY KEYWORD)
+		 WHERE RN &lt; 11
+		union
+		SELECT 'sp' HOT_TYPE,
+		       RN,
+		       KEYWORD
+		  FROM (SELECT KEYWORD, ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_USER_KEYWORD A, TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+				<if test="queryType!=null and queryType!=''">
+		           AND HOT_SOURCE = #{queryType}
+				</if>
+		           AND CASE
+		                 WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		                  '食品'
+		                 ELSE
+		                  HOT_TYPE
+		               END = '食品'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY KEYWORD)
+		 WHERE RN &lt; 11		
+		union
+		SELECT 'fz' HOT_TYPE,
+			   RN,
+			   KEYWORD
+		  FROM (SELECT KEYWORD, ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_USER_KEYWORD A, TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+				<if test="queryType!=null and queryType!=''">
+		           AND HOT_SOURCE = #{queryType}
+				</if>
+		           AND CASE
+		                 WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		                  '食品'
+		                 ELSE
+		                  HOT_TYPE
+		               END = '服装'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY KEYWORD)
+		 WHERE RN &lt; 11
+		union
+		SELECT 'jd' HOT_TYPE,
+			   RN,
+			   KEYWORD
+		  FROM (SELECT KEYWORD, ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_USER_KEYWORD A, TB_LARGE_AREA F
+		         WHERE A.AREA_ID = F.AREA_ID
+				<choose>
+				  <when test="dateType=='before'">
+		           AND A.DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1115'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND A.DATE_NO = to_char(sysdate,'YYYY')||'1115'
+				  </when>
+				  <otherwise>
+		           AND A.DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+				<if test="queryType!=null and queryType!=''">
+		           AND HOT_SOURCE = #{queryType}
+				</if>
+		           AND CASE
+		                 WHEN HOT_TYPE IN ('果蔬、干果', '酒水饮料', '生鲜') THEN
+		                  '食品'
+		                 ELSE
+		                  HOT_TYPE
+		               END = '家电'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_ID = F.AREA_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="areaName!=null and areaName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 4
+		                   AND G.AREA_NAME = #{areaName}
+		                   AND G.AREA_ID = F.AREA_ID)
+				</if>
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.AREA_ID = F.PARENT_AREA)
+				</if>
+		         GROUP BY KEYWORD)
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 114访问信息 -->
+	<select id="getVisit114Info" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT DATE_NO,
+		       SUM(USER_COUNT) USER_COUNT
+		  FROM TB_LARGE_USER_URL A,
+		  	   TB_LARGE_AREA F
+		 WHERE A.AREA_ID = F.AREA_ID
+		<choose>
+		  <when test="dateType=='before'">
+           AND A.DATE_NO BETWEEN to_char(add_months(sysdate,-12),'YYYY')||'1020' AND to_char(add_months(sysdate,-12),'YYYY')||'1115'
+		  </when>
+		  <otherwise>
+           AND A.DATE_NO BETWEEN to_char(sysdate,'YYYY')||'1020' AND to_char(sysdate,'YYYY')||'1115'
+		  </otherwise>
+		</choose>
+		   AND OTHERS = '114mail'
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY DATE_NO
+		 ORDER BY DATE_NO
+	</select>
+	<!-- 翼支付交付质量 -->
+	<select id="getWingPayInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT DAY_ID,
+		       SUM(CONSUME_USER) total_count
+		  FROM TB_LARGE_BESTPAY_CONSUME A,
+		       TB_LARGE_AREA F
+		 WHERE A.AREA_ID = F.AREA_ID
+		<choose>
+		  <when test="dateType=='before'">
+           AND A.DAY_ID BETWEEN to_char(add_months(sysdate,-12),'YYYY')||'1020' AND to_char(add_months(sysdate,-12),'YYYY')||'1115'
+		  </when>
+		  <otherwise>
+           AND A.DAY_ID BETWEEN to_char(sysdate,'YYYY')||'1020' AND to_char(sysdate,'YYYY')||'1115'
+		  </otherwise>
+		</choose>
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY DAY_ID
+		 ORDER BY DAY_ID
+	</select>
+</mapper>

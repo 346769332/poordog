@@ -1,0 +1,285 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="operation">
+	<!-- 4G用户统计信息 -->
+	<select id="getUserInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.INDI_NAME reach_name,
+		       nvl(SUM(A.INDI_NUM),0) reach_value
+		  FROM TB_OTHER_INDI_DATA A, TB_LARGE_AREA F
+		 WHERE A.INDI_ID = 2
+		   AND A.AREA = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_OTHER_INDI_DATA WHERE INDI_ID = 2)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.INDI_NAME
+	</select>
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT MODULE_NAME,
+			   LATN_ID,
+			   LATN_NAME,
+			   nvl(SUM(VALUE),0) COUNT_NUM
+		  FROM (SELECT D.MODULE_NAME,
+		               A.AREA_ID,
+		               A.LATN_ID,
+		               A.LATN_NAME,
+		               A.INDI_ID,
+		               B.INDINAME,
+		               SUM(A.INDI_VAL) VALUE
+		          FROM TB_LARGE_INDI_VALUE_INFO A,
+		               TB_LARGE_INDI_TYPE       B,
+		               TB_LARGE_TYPE_REL        C,
+		               TB_LARGE_MODULE_TYPE     D
+		         WHERE A.INDI_ID = B.INDI_ID
+		           AND A.DATE_NO = CASE
+		                 WHEN #{module_id} IN (4, 17, 18, 19, 20) THEN
+		                  TO_CHAR(SYSDATE - 1, 'YYYYMMDD')
+		                 ELSE
+		                  TO_CHAR(SYSDATE, 'YYYYMMDD')
+		               END
+		           AND B.INDI_ID = C.INDI_ID
+		           AND C.MODULE_ID = D.MODULE_ID
+		           AND D.MODULE_ID = #{module_id}
+		           AND CASE
+		                 WHEN #{module_id} = 1 THEN 4
+		                 WHEN #{module_id} = 8 THEN 4
+		                 WHEN #{module_id} = 13 THEN 2
+		                 WHEN #{module_id} = 17 THEN 3
+		                 WHEN #{module_id} = 21 THEN 0
+		                 ELSE 0
+		               END = NVL(A.DIM_TYPE1, 0)
+		         GROUP BY D.MODULE_NAME,
+		                  A.AREA_ID,
+		                  A.AREA_ID,
+		                  A.LATN_ID,
+		                  A.LATN_NAME,
+		                  A.INDI_ID,
+		                  B.INDINAME)
+		 GROUP BY MODULE_NAME, LATN_ID, LATN_NAME
+		 ORDER BY COUNT_NUM DESC
+    </select>    
+    <!-- 翼支付详情 -->
+    <select id="getWingPayInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+    	SELECT A.PARTNER_TYPE pay_type, 
+		       nvl(SUM(A.CONSUME_CHARGE),0) sum_value
+		  FROM TB_LARGE_BESTPAY_CONSUME A,
+		       VW_LOC_AREA      B,
+		       VW_LOC_AREA      C,
+		       TB_LARGE_AREA			F
+		 WHERE A.DAY_ID = (SELECT MAX(DAY_ID) FROM TB_LARGE_BESTPAY_CONSUME)
+		   AND A.LATN_ID = B.ZONE_NUMBER
+		   AND B.AREA_LEVEL = 3
+		   AND A.AREA_ID = C.AREA_ID
+		   AND A.AREA_ID = F.AREA_ID
+		   AND C.AREA_LEVEL = 4
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.PARTNER_TYPE
+		 ORDER BY SUM_VALUE
+    </select>
+    <!-- 销量信息 -->
+    <select id="getSaleInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT nvl(SUM(CASE
+		             WHEN A.INDI_ID = 3 THEN
+		              A.NUM
+		           END),0) day_fz,
+		       nvl(SUM(CASE
+		             WHEN A.INDI_ID = 4 THEN
+		              A.NUM
+		           END),0) day_cj,
+		       nvl(round(SUM(CASE
+		             WHEN A.INDI_ID = 3 THEN
+		              A.MON_NUM
+		           END)/10000,2),0) month_fz,
+		       nvl(round(SUM(CASE
+		             WHEN A.INDI_ID = 4 THEN
+		              A.MON_NUM
+		           END)/10000,2),0) month_cj,
+		       nvl(round(SUM(CASE
+		             WHEN A.INDI_ID = 3 THEN
+		              A.YEAR_NUM
+		           END)/10000,2),0) year_fz,
+		       nvl(round(SUM(CASE
+		             WHEN A.INDI_ID = 4 THEN
+		              A.YEAR_NUM
+		           END)/10000,2),0) year_cj,
+		<choose>
+			<when test="queryType=='dinner'">
+		       '销量-套餐' sale_type
+		  FROM TB_LARGE_OFFER A,
+			</when>
+			<otherwise>
+		       '销量-用户' sale_type
+		  FROM TB_LARGE_PRODUCT A,
+			</otherwise>
+		</choose>
+		       TB_LARGE_AREA F
+		 WHERE A.INDI_ID IN (3, 4)
+		   AND A.AREA = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID)
+		                      FROM 
+							<choose>
+								<when test="queryType=='dinner'">
+		                      	   TB_LARGE_OFFER
+								</when>
+								<otherwise>
+		                      	   TB_LARGE_PRODUCT
+								</otherwise>
+							</choose>
+		                     WHERE INDI_ID IN (3, 4))
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+    </select>
+    <!-- 欠费信息 -->
+    <select id="getOweFeeInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+    	SELECT B.CODE_NAME owe_type, 
+		       nvl(round(SUM(A.OWE_CHARGE)/10000,2),0) owe_charge
+		  FROM TB_LARGE_OWE        A,
+		       TB_LARGE_CODE       B,
+		       TB_LARGE_CODE       C,
+		       VW_LOC_AREA D,
+		       VW_LOC_AREA E,
+		       TB_LARGE_AREA       F
+		 WHERE A.OWE_TYPE = B.CODE_VALUE
+		   AND A.AREA_ID = D.AREA_ID
+		   AND D.AREA_LEVEL = 4
+		   AND A.LATN_ID = E.ZONE_NUMBER
+		   AND E.AREA_LEVEL = 3
+		   AND TO_CHAR(A.OWE_DUR) = C.CODE_VALUE
+		   AND B.CODE_TYPE = 'OWE_TYPE'
+		   AND C.CODE_TYPE = 'OWE_TIME'
+		   AND A.AREA_ID = F.AREA_ID
+		   AND A.DAY_ID IN (SELECT MAX(DAY_ID) FROM TB_LARGE_OWE)
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA_ID = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY B.CODE_NAME
+    </select>
+    <!-- 收入信息 -->
+ 	<select id="getIncomeInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.DAY_ID day_id, 
+		       nvl(round(SUM(A.ADD_CHARGE)/10000,2),0) add_charge
+		  FROM TB_LARGE_INCOME A, TB_LARGE_AREA F
+		 WHERE A.AREA = F.AREA_ID
+		   AND A.INDI_ID='2'
+		   AND A.DAY_ID BETWEEN TO_CHAR(SYSDATE - 6, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.AREA = F.AREA_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 GROUP BY A.DAY_ID
+		 ORDER BY A.DAY_ID
+ 	</select>
+    <!-- itv信息 -->
+ 	<select id="getItvInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+ 		select dim_name itv_type,
+		       NVL(sum(indi_num),0) sum_val
+		  from TB_OTHER_INDI_DATA a,
+		       VW_LOC_AREA B,
+		       VW_LOC_AREA C,
+		       TB_LARGE_AREA F
+		 WHERE A.latn = B.ZONE_NUMBER
+		   AND B.AREA_LEVEL = 3
+		   AND A.AREA = C.AREA_ID
+		   AND A.AREA = F.AREA_ID
+		   AND C.AREA_LEVEL = 4
+		   and a.day_id =(SELECT max(day_id) FROM TB_OTHER_INDI_DATA WHERE indi_id = 3)
+		   and indi_id = 3
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE a.latn = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if>
+		 group by dim_name 		
+ 	</select>
+</mapper>

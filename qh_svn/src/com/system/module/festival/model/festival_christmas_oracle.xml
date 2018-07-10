@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="christmas">
+	<!-- 兴趣点 -->
+	<select id="getInterestInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT KEYWORD key_word,
+		       USER_COUNT search_count
+		  FROM (SELECT KEYWORD,
+		               SUM(USER_COUNT) USER_COUNT,
+		               ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_USER_KEYWORD
+		         WHERE HOT_TYPE = '圣诞'
+		         GROUP BY KEYWORD)
+	</select>
+	<!-- 话务量信息 -->
+	<select id="getCallBusiInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT SUM(CASE WHEN DATE_NO IN (#{year}||'1224',#{year}||'1225') THEN TOTAL_NUMBER ELSE 0 END) this_year,
+		       SUM(CASE WHEN DATE_NO IN (#{year}||'1124',#{year}||'1125') THEN TOTAL_NUMBER ELSE 0 END) daily_value,
+		       SUM(CASE WHEN DATE_NO IN ((#{year}-1)||'1224',(#{year}-1)||'1225') THEN TOTAL_NUMBER ELSE 0 END) last_year
+		  FROM TB_LARGE_TRAFFIC T
+		 WHERE T.HW_TYPE='CALL'
+		   AND DATE_NO IN (#{year}||'1224',#{year}||'1225',#{year}||'1124',#{year}||'1125',(#{year}-1)||'1224',(#{year}-1)||'1225')
+	</select>
+	<!-- 短信量信息 -->
+	<select id="getMsgBusiInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT SUM(CASE WHEN DATE_NO IN (#{year}||'1224',#{year}||'1225') THEN TOTAL_NUMBER ELSE 0 END) this_year,
+		       SUM(CASE WHEN DATE_NO IN (#{year}||'1124',#{year}||'1125') THEN TOTAL_NUMBER ELSE 0 END) daily_value,
+		       SUM(CASE WHEN DATE_NO IN ((#{year}-1)||'1224',(#{year}-1)||'1225') THEN TOTAL_NUMBER ELSE 0 END) last_year
+		  FROM TB_LARGE_TRAFFIC T
+		 WHERE T.HW_TYPE='SMS'
+		   AND DATE_NO IN (#{year}||'1224',#{year}||'1225',#{year}||'1124',#{year}||'1125',(#{year}-1)||'1224',(#{year}-1)||'1225')
+	</select>
+	<!-- 翼支付信息 -->
+	<select id="getWingPayInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT rn,
+			   partner_name,
+			   consume_totol
+		  FROM (SELECT B.PARTNER_NAME,
+		               SUM(A.CONSUME_NUMBER) CONSUME_TOTOL,
+		               ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(A.CONSUME_NUMBER) DESC) RN
+		          FROM TB_LARGE_BESTPAY_CONSUME A,
+		               TB_LARGE_BESTPAY_PARTNER B
+		         WHERE A.PARTNER_ID = B.PARTNER_ID
+		           AND DAY_ID IN (#{startDate},#{endDate})
+		         GROUP BY B.PARTNER_NAME)
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 应用app -->
+	<select id="getAppInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT rn,
+			   app_name,
+			   round(flow_sum/1024/1024,2) app_flow
+		  FROM (SELECT APP_NAME,
+		               SUM(TRAFFIC) FLOW_SUM,
+		               ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY SUM(TRAFFIC) DESC) RN
+		          FROM TB_LARGE_USER_APP
+		         WHERE DATE_NO IN(#{startDate},#{endDate})
+		         GROUP BY APP_NAME)
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 购物、人流量、吃、喝、玩 -->
+	<select id="getMultipleInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT ROW_NUMBER() OVER(PARTITION BY 1 ORDER BY ROUND(SUM(MONTHLY_DATA)/12, 2) DESC) RN,
+		       BUSINESS_CIRCLE, 
+		       ROUND(SUM(MONTHLY_DATA)/12, 2) CIRCLE_VALUE
+		  FROM TB_LARGE_BUSINESS_CIRCLE_DATA
+		 WHERE DATE_NO = #{startDate}
+		 GROUP BY BUSINESS_CIRCLE
+		 ORDER BY CIRCLE_VALUE DESC
+	</select>
+</mapper>

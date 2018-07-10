@@ -1,0 +1,13 @@
+/*-------------------------------------
+ *FileName：error.css
+ *Author：hechuan
+ *Description： eroor page css
+ *Date:2016-08-08
+ *Version： V2.0
+-------------------------------------*/
+/*错误页样式*/
+@font-face{font-family:'Jenna Sue';src:url('../fonts/errorfont.eot');src:url('../fonts/errorfont.eot?#iefix') format('embedded-opentype'),url('../fonts/errorfont.woff') format('woff'),url('../fonts/errorfont.ttf') format('truetype'),url('../fonts/errorfont.svg#AsapRegular') format('svg');font-weight:normal;font-style:normal;color:red;}
+.text-area{width:512px;padding:64px;text-align:center;color:red;}
+.error{font:96px Jenna Sue, Helvetica, Arial, sans-serif;color:red;font-weight: bold;border-bottom: 2px dashed red;}
+.rotate{-webkit-transform: rotate(-15deg);}
+.details{font:64px Jenna Sue, Helvetica, Arial, sans-serif;}

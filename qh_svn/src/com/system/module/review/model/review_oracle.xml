@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="review">
+	<!-- 话务量信息 -->
+	<select id="getCallBusiInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+	SELECT to_number(substr(a.day_id,5,2))||'月' month_no,
+         round(SUM(CASE
+             WHEN A.INDI_ID = 1 THEN
+              A.NUM
+           END)/10000,2) shengnei_num,  
+         round(SUM(CASE
+             WHEN A.INDI_ID = 2 THEN
+              A.NUM
+           END)/10000,2) shengji_num,  
+        round( SUM(CASE
+             WHEN A.INDI_ID = 3 THEN
+              A.NUM
+           END)/10000,2) guoji_num
+  FROM TB_LARGE_HWL A, TB_LARGE_AREA F
+ WHERE A.INDI_ID IN (1, 2, 3)
+   AND A.AREA = F.AREA_ID
+   AND substr(A.DAY_ID, 1, 4) = to_char(sysdate, 'yyyy') - 1
+   AND EXISTS (SELECT 1
+          FROM TB_LARGE_USER_AREA_REL F
+         WHERE A.AREA= F.AREA_ID
+           AND F.USER_ID =#{userId})
+        <if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = F.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID = F.PARENT_AREA)
+		</if> 
+ GROUP BY substr(a.day_id,5,2)
+ order  by  substr(a.day_id,5,2)
+
+	</select>
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT * FROM DUAL
+    </select>
+	<!-- 短信量信息 -->
+	<select id="getMessageBusiInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT to_number(substr(date_no, 5, 2))||'月' month_no,
+		round(suM(t.total_number)/10000,2)  sum_num ,
+       round(SUM(case when t.hw_sub_type = 'SMS1' THEN t.total_number END)/10000,2) to_dx,
+       round(SUM(case when t.hw_sub_type = 'SMS2' THEN t.total_number END)/10000,2)   to_yd,
+       round(SUM(case when t.hw_sub_type = 'SMS3' THEN t.total_number END)/10000,2)   to_lt
+  FROM TB_LARGE_TRAFFIC T,
+       VW_LOC_AREA      B,
+       VW_LOC_AREA      C
+ WHERE T.date_no between to_char(add_months(sysdate,-12),'yyyy"01"') and to_char(add_months(sysdate,-12),'yyyy"12"')
+   AND T.LATN = B.ZONE_NUMBER
+   AND B.AREA_LEVEL = 3
+   AND T.AREA = C.AREA_ID
+   AND C.AREA_LEVEL = 4
+   AND EXISTS (SELECT *
+          FROM TB_LARGE_USER_AREA_REL A
+         WHERE A.AREA_ID = T.AREA
+           AND A.USER_ID = ${userId})
+    <if test="areaName!=null and areaName!=''">        
+   AND EXISTS (SELECT *
+        FROM TB_LARGE_AREA G
+       WHERE G.AREA_LEVEL = 4
+         AND G.AREA_NAME =#{areaName}
+         AND G.AREA_ID = C.AREA_ID) 
+         </if>
+		<if test="latnName!=null and latnName!=''">
+ AND EXISTS (SELECT *
+        FROM TB_LARGE_AREA G
+       WHERE G.AREA_LEVEL = 3
+         AND G.AREA_NAME =#{latnName}
+         AND G.AREA_ID = B.AREA_ID)  
+        </if>
+ group by substr(date_no, 5, 2)
+ order by substr(date_no, 5, 2)
+  
+	</select>
+	<!-- 充值信息 -->
+	<select id="getRechargeInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT to_number(TLL.MONTH)||'月' month_no,
+       round(SUM(TLL.PAY_NUMBER)/10000,2) last_num,  
+       round(SUM(TL.PAY_NUMBER)/10000,2) before_num,
+       round(SUM(TLL.PAY_CHARGE)/100000000,2) last_charge, 
+       round(SUM(TL.PAY_CHARGE)/100000000,2) before_charge  
+  FROM (SELECT SUBSTR(A.MONTH_ID, 5, 2) MONTH,
+               A.MONTH_ID,
+               A.LATN_ID,
+               A.AREA_ID,
+               SUM(A.PAY_NUMBER) PAY_NUMBER,
+               SUM(A.PAY_CHARGE) PAY_CHARGE
+          FROM TB_LARGE_PAYMENT A
+         WHERE SUBSTR(A.MONTH_ID, 1, 4) =
+               TO_CHAR(ADD_MONTHS(SYSDATE, -24), 'YYYY')
+         GROUP BY A.MONTH_ID, A.LATN_ID, A.AREA_ID) TLL,
+       (SELECT SUBSTR(A.MONTH_ID, 5, 2) MONTH,
+               A.MONTH_ID,
+               A.LATN_ID,
+               A.AREA_ID,
+               SUM(A.PAY_NUMBER) PAY_NUMBER,
+               SUM(A.PAY_CHARGE) PAY_CHARGE
+          FROM TB_LARGE_PAYMENT A
+         WHERE SUBSTR(A.MONTH_ID, 1, 4) =
+               TO_CHAR(ADD_MONTHS(SYSDATE, -12), 'YYYY')
+         GROUP BY A.MONTH_ID, A.LATN_ID, A.AREA_ID) TL,
+       VW_LOC_AREA B,
+       VW_LOC_AREA C
+ WHERE TLL.MONTH = TL.MONTH
+   AND TLL.LATN_ID = TL.LATN_ID
+   AND TLL.AREA_ID = TL.AREA_ID
+   AND TLL.LATN_ID = B.ZONE_NUMBER
+   AND B.AREA_LEVEL = 3
+   AND TLL.AREA_ID = C.AREA_ID
+   AND C.AREA_LEVEL = 4
+   AND EXISTS (SELECT *
+ FROM TB_LARGE_USER_AREA_REL A
+WHERE A.AREA_ID = TLL.AREA_ID
+  AND A.USER_ID = #{userId})
+   <if test="areaName!=null and areaName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 4
+		           AND G.AREA_NAME = #{areaName}
+		           AND G.AREA_ID = C.AREA_ID)
+		</if>
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.AREA_ID =B.AREA_ID )
+		</if>  
+ GROUP BY TLL.MONTH
+ ORDER BY TLL.MONTH
+	</select>
+	<!-- 手机用户上网信息 -->
+	<select id="getMobileUserInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+			SELECT to_number(a.last_year_month) || '月' month_no,
+			       round(a.last_year_ll / 1024, 2) bef_ll,
+			       round(b.llast_year_ll / 1024, 2) last_ll
+			  FROM (SELECT substr(A.date_no, 5, 2) last_year_month,
+			               sum(total_ll) last_year_ll
+			          FROM TB_LARGE_INTERNET a, TB_LARGE_AREA F
+			         WHERE a.ll_type = 1
+			           AND A.AREA_id = F.AREA_ID
+			           AND substr(A.date_no, 1, 4) = to_char(add_months(sysdate,-12),'yyyy')
+			           AND EXISTS (SELECT 1
+			                  FROM TB_LARGE_USER_AREA_REL F
+			                 WHERE A.AREA_id = F.AREA_ID
+			                   AND F.USER_ID = #{userId})  
+			            <if test="areaName!=null and areaName!=''">
+			           		and exists (select 1
+			                  from tb_large_area g
+			                 where g.area_level = 4
+			                   and g.area_name =  #{areaName}
+			                   and g.area_id = f.area_id)  
+			             </if>
+			             <if test="latnName!=null and latnName!=''">
+					        and   exists  (select  1 from  tb_large_area g 
+					        where g.area_level=3
+					        and g.area_name=#{latnName}
+					        and g.area_id=f.parent_area) 
+			        	</if>
+			         GROUP BY substr(A.date_no, 5, 2)) a,
+			       (SELECT substr(A.date_no, 5, 2) llast_year_month,
+			               sum(total_ll) llast_year_ll
+			          FROM TB_LARGE_INTERNET a, TB_LARGE_AREA F
+			         WHERE a.ll_type = 1
+			           AND A.AREA_id = F.AREA_ID
+			           AND substr(A.date_no, 1, 4) = to_char(add_months(sysdate,-24),'yyyy')
+			           AND EXISTS (SELECT 1
+			                  FROM TB_LARGE_USER_AREA_REL F
+			                 WHERE A.AREA_id = F.AREA_ID
+			                   AND F.USER_ID = #{userId}) 
+			      <if test="areaName!=null and areaName!=''">
+			           and exists (select 1
+			                  from tb_large_area g
+			                 where g.area_level = 4
+			                   and g.area_name =  #{areaName}
+			                   and g.area_id = f.area_id)  
+			       </if>
+			        <if test="latnName!=null and latnName!=''">
+				        and   exists  (select  1 from  tb_large_area g 
+				        where g.area_level=3
+				        and g.area_name=#{latnName}
+				        and g.area_id=f.parent_area) 
+			        </if>
+			         GROUP BY substr(A.date_no, 5, 2)) b
+			 WHERE a.last_year_month = b.llast_year_month
+			 order by a.last_year_month
+	</select>
+	<!-- 用户行为 APP -->
+	<select id="getAppInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT app_name, traffic
+  FROM (SELECT app_name,
+               sum(traffic) traffic,
+               row_number() over(order by sum(traffic) desc) rn
+          FROM tb_large_user_app a, TB_LARGE_AREA F
+         WHERE A.AREA_id = F.AREA_ID
+           AND substr(A.date_no,1,4) = to_char(add_months(sysdate,-12),'yyyy')
+           AND EXISTS (SELECT 1
+                  FROM TB_LARGE_USER_AREA_REL F
+                 WHERE A.AREA_id = F.AREA_ID
+                   AND F.USER_ID =  #{userId}) 
+        <if test="areaName!=null and areaName!=''">            
+           and exists (select 1
+                  from tb_large_area g
+                 where g.area_level = 4
+                   and g.area_name = #{areaName}
+                   and g.area_id = f.area_id) 
+        </if>
+        <if test="latnName!=null and latnName!=''">    
+           and exists (select 1
+                  from tb_large_area g
+                 where g.area_level = 3
+                   and g.area_name = #{latnName}
+                   and g.area_id = f.parent_area) 
+        </if>
+         GROUP BY app_name)
+ where rn  &lt; 11
+	</select>
+	<!-- 用户行为 URL -->
+	<select id="getUrlInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+				SELECT domain url_name, user_count
+		  FROM (SELECT domain,
+		               sum(user_count) user_count,
+		               row_number() over(order by sum(user_count) desc) rn
+		          FROM TB_LARGE_USER_URL a, TB_LARGE_AREA F
+		         WHERE A.latn_id = F.zone_number
+		           and f.area_level = 3
+		           AND substr(A.date_no,1,4) = to_char(add_months(sysdate,-12),'yyyy')
+		           and others is null
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.latn_id = F.zone_number
+		                   AND F.USER_ID = #{userId})
+		               <if test = "latnName!=null and latnName!=''" >
+		           and exists (select 1
+		                  from tb_large_area g
+		                 where g.area_level = 3
+		                   and g.area_name = #{latnName}
+		                   and g.area_id = f.parent_area) 
+		          </if>
+		         group by domain)
+		 WHERE rn &lt;21
+	</select>
+	<!-- 用户行为 关键词 -->
+	<select id="getKeywordInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT keyword, user_count
+		  FROM (SELECT keyword,
+		               sum(user_count) user_count,
+		               row_number() over(order by sum(user_count) desc) rn
+		          FROM tb_LARGE_USER_KEYWORD a, TB_LARGE_AREA F
+		         WHERE A.AREA_id = F.AREA_ID
+		           AND substr(A.date_no,1,4) = to_char(add_months(sysdate,-12),'yyyy')
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.AREA_id = F.AREA_ID
+		                   AND F.USER_ID = #{userId}) 
+		         <if test="areaName!=null and areaName!=''">   
+		           and exists (select 1
+		                  from tb_large_area g
+		                 where g.area_level = 4
+		                   and g.area_name = #{areaName}
+		                   and g.area_id = f.area_id)  
+		         </if>
+		         <if test="latnName!=null and latnName!=''">   
+		           and exists (select 1
+		                  from tb_large_area g
+		                 where g.area_level = 3
+		                   and g.area_name = #{latnName}
+		                   and g.area_id = f.parent_area)  
+		         </if>
+		         group by keyword)
+			 where rn &lt; 51
+	</select>
+	<!-- 用户行为 兴趣点 -->
+	<select id="getInterestInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT class_name, round(traffic/1024,2) traffic
+  FROM (SELECT class_name,
+               sum(traffic) traffic,
+               row_number() over(order by sum(user_count) desc) rn
+          FROM TB_LARGE_USER_class a, TB_LARGE_AREA F
+         WHERE A.AREA_id = F.AREA_ID
+           AND substr(A.date_no,1,4) = to_char(add_months(sysdate,-12),'yyyy')
+         AND EXISTS (SELECT 1
+                  FROM TB_LARGE_USER_AREA_REL F
+                 WHERE A.AREA_id = F.AREA_ID
+           AND F.USER_ID = #{userId}) 
+		         <if test="areaName!=null and areaName!=''">   
+		           and exists (select 1
+		                  from tb_large_area g
+		                 where g.area_level = 4
+		                   and g.area_name = #{areaName}
+		                   and g.area_id = f.area_id)  
+		         </if>
+		         <if test="latnName!=null and latnName!=''">   
+		           and exists (select 1
+		                  from tb_large_area g
+		                 where g.area_level = 3
+		                   and g.area_name = #{latnName}
+		                   and g.area_id = f.parent_area)  
+		         </if>
+		         group by class_name 
+ )
+ WHERE rn &lt;10
+ order by traffic
+
+	</select>
+</mapper>

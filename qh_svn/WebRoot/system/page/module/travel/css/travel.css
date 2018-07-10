@@ -1,0 +1,14 @@
+/*--------------------
+ *FileName：qhTravel.css
+ *Author：hechuan
+ *Description： 青海旅游特殊样式
+ *Date:2017-03-02
+ *Version： V2.0
+--------------------*/
+.p-2-4{padding: 2% 4%!important;}
+.qh_wt_border{background: url('../images/qh-line1.png') no-repeat;background-size:100% 100%;}
+.qh-in-title{background: url("../images/qh-in-title.png") no-repeat center center; line-height: 40px; text-align: center;}
+#consumption{background: rgba(35,57,92,0.3); border-radius: 8px; padding: 10px;}
+.qh-video{background: url('../images/qh-line3.png') no-repeat;background-size:100% 100%;}
+.qh-l-zi{text-align: right}
+.ch{color:#ffffff;}

@@ -1,0 +1,12 @@
+/*--------------------
+ *FileName：operation.css
+ *Author：hechuan
+ *Description： 运营监控特殊样式
+ *Date:2017-03-02
+ *Version： V2.0
+--------------------*/
+/*----------------------------标题头样式----------------------------*/
+.br_4g{background: url('../images/c_4g_bg.png') no-repeat;background-size:100% 100%;}
+.center{width:92%;height: auto;padding-left:4%;}
+.m_c1{width: 98%;height:48%;margin:8px;}
+.m_c2{width: 98%;height:98%;margin:8px;}

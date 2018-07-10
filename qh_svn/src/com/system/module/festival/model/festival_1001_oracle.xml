@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="festival_1001">
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT 'in' roam_type,
+		       CASE
+		         WHEN USER_PROV_NAME NOT LIKE '内蒙古%' AND
+		              USER_PROV_NAME NOT LIKE '黑龙江%' THEN
+		          SUBSTR(USER_PROV_NAME, 1, 2)
+		         ELSE
+		          SUBSTR(USER_PROV_NAME, 1, 3)
+		       END USER_PROV_NAME,
+		       SUBSTR(VISIT_PROV_NAME, 1, 2) VISIT_PROV_NAME,
+		       NVL(SUM(USER_NUM_7), 0) USER_NUM
+		  FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		 WHERE FLAG = 1
+		<choose>
+		  <when test="dateType=='before'">
+           AND DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1007'
+		  </when>
+		  <when test="dateType=='after'">
+           AND DATE_NO = to_char(sysdate,'YYYY')||'1007'
+		  </when>
+		  <otherwise>
+           AND DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+		  </otherwise>
+		</choose>
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE T.VISIT_LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = T.VISIT_LATN_ID)
+		</if>
+		 GROUP BY CASE
+		            WHEN USER_PROV_NAME NOT LIKE '内蒙古%' AND
+		                 USER_PROV_NAME NOT LIKE '黑龙江%' THEN
+		             SUBSTR(USER_PROV_NAME, 1, 2)
+		            ELSE
+		             SUBSTR(USER_PROV_NAME, 1, 3)
+		          END,
+		          SUBSTR(VISIT_PROV_NAME, 1, 2)
+		union
+		SELECT 'out' roam_type,
+		       SUBSTR(USER_PROV_NAME, 1, 2) USER_PROV_NAME,
+		       CASE
+		         WHEN VISIT_PROV_NAME NOT LIKE '内蒙古%' AND
+		              VISIT_PROV_NAME NOT LIKE '黑龙江%' THEN
+		          SUBSTR(VISIT_PROV_NAME, 1, 2)
+		         ELSE
+		          SUBSTR(VISIT_PROV_NAME, 1, 3)
+		       END VISIT_PROV_NAME,
+		       NVL(SUM(USER_NUM_7), 0) USER_NUM
+		  FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		 WHERE FLAG = 2
+		<choose>
+		  <when test="dateType=='before'">
+           AND DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1007'
+		  </when>
+		  <when test="dateType=='after'">
+           AND DATE_NO = to_char(sysdate,'YYYY')||'1007'
+		  </when>
+		  <otherwise>
+           AND DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+		  </otherwise>
+		</choose>
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE T.USER_LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = T.USER_LATN_ID)
+		</if>
+		 GROUP BY CASE
+		            WHEN VISIT_PROV_NAME NOT LIKE '内蒙古%' AND
+		                 VISIT_PROV_NAME NOT LIKE '黑龙江%' THEN
+		             SUBSTR(VISIT_PROV_NAME, 1, 2)
+		            ELSE
+		             SUBSTR(VISIT_PROV_NAME, 1, 3)
+		          END,
+		          SUBSTR(USER_PROV_NAME, 1, 2)
+    </select>
+	<!-- 漫入信息 -->
+	<select id="getRoamInInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT USER_PROV_NAME,
+		       USER_NUM
+		  FROM (SELECT CASE
+		                 WHEN USER_PROV_NAME NOT LIKE '内蒙古%' AND
+		                      USER_PROV_NAME NOT LIKE '黑龙江%' THEN
+		                  SUBSTR(USER_PROV_NAME, 1, 2)
+		                 ELSE
+		                  SUBSTR(USER_PROV_NAME, 1, 3)
+		               END USER_PROV_NAME,
+		               SUBSTR(VISIT_PROV_NAME, 1, 2) VISIT_PROV_NAME,
+		               nvl(SUM(USER_NUM_7),0) USER_NUM,
+		               ROW_NUMBER() OVER(ORDER BY nvl(SUM(USER_NUM),0) DESC) RN
+		          FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		         WHERE FLAG = 1
+				<choose>
+				  <when test="dateType=='before'">
+		           AND DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1007'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND DATE_NO = to_char(sysdate,'YYYY')||'1007'
+				  </when>
+				  <otherwise>
+		           AND DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE T.VISIT_LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = T.VISIT_LATN_ID)
+				</if>
+		         GROUP BY CASE
+		                    WHEN USER_PROV_NAME NOT LIKE '内蒙古%' AND
+		                         USER_PROV_NAME NOT LIKE '黑龙江%' THEN
+		                     SUBSTR(USER_PROV_NAME, 1, 2)
+		                    ELSE
+		                     SUBSTR(USER_PROV_NAME, 1, 3)
+		                  END,
+		                  SUBSTR(VISIT_PROV_NAME, 1, 2))
+		 WHERE RN &lt; 11
+	</select>
+	<!-- 漫出信息 -->
+	<select id="getRoamOutInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT VISIT_PROV_NAME, 
+		       USER_NUM
+		  FROM (SELECT SUBSTR(USER_PROV_NAME, 1, 2) USER_PROV_NAME,
+		               CASE
+		                 WHEN VISIT_PROV_NAME NOT LIKE '内蒙古%' AND
+		                      VISIT_PROV_NAME NOT LIKE '黑龙江%' THEN
+		                  SUBSTR(VISIT_PROV_NAME, 1, 2)
+		                 ELSE
+		                  SUBSTR(VISIT_PROV_NAME, 1, 3)
+		               END VISIT_PROV_NAME,		               
+		               nvl(SUM(USER_NUM_7),0) USER_NUM,
+		               ROW_NUMBER() OVER(ORDER BY nvl(SUM(USER_NUM),0) DESC) RN
+		          FROM DM_OSS_VISIT_OTHER_AREA_DAY T
+		         WHERE FLAG = 2
+				<choose>
+				  <when test="dateType=='before'">
+		           AND DATE_NO = to_char(add_months(sysdate,-12),'YYYY')||'1007'
+				  </when>
+				  <when test="dateType=='after'">
+		           AND DATE_NO = to_char(sysdate,'YYYY')||'1007'
+				  </when>
+				  <otherwise>
+		           AND DATE_NO = to_char(sysdate-1,'YYYYMMDD')
+				  </otherwise>
+				</choose>
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE T.USER_LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = T.USER_LATN_ID)
+				</if>
+		         GROUP BY CASE
+		                    WHEN VISIT_PROV_NAME NOT LIKE '内蒙古%' AND
+		                         VISIT_PROV_NAME NOT LIKE '黑龙江%' THEN
+		                     SUBSTR(VISIT_PROV_NAME, 1, 2)
+		                    ELSE
+		                     SUBSTR(VISIT_PROV_NAME, 1, 3)
+		                  END,
+		                  SUBSTR(USER_PROV_NAME, 1, 2))
+		 WHERE RN &lt; 11
+	</select>
+</mapper>

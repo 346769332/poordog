@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="proviceRoam">
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT decode( case
+         when a.type_code = 2 then
+           new_latn_name 
+         else
+          loc_latn_name
+       end,'格尔木本地网','格尔木市',case
+         when a.type_code = 2 then
+           new_latn_name 
+         else
+          loc_latn_name
+       end) user_latn_name,
+      decode(  case
+         when a.type_code = 1 then
+          new_latn_name
+         else
+          loc_latn_name
+       end ,'格尔木本地网','格尔木市',case
+         when a.type_code = 1 then
+          new_latn_name
+         else
+          loc_latn_name
+       end ) visit_latn_name,
+       sum(user_number) user_num,
+       case
+         when a.type_code = 1 then
+          'out'
+         else
+          'in'
+       end roam_type
+  FROM TB_LARGE_LOCAL_MY a
+ WHERE day_id = (SELECT max(day_id) FROM TB_LARGE_LOCAL_MY)
+ and exists (select 1
+       from TB_LARGE_USER_AREA_REL f
+      where 0 || a.loc_latn_id = f.latn_id
+        and f.user_id =  #{userId})
+   and loc_latn_name &lt;&gt; new_latn_name
+    <if test="latnName!=null and latnName!=''">
+   and exists (select 1
+       from tb_large_area g
+      where g.area_level = 3
+        and g.area_name =  #{latnName}
+        and g.zone_number = a.loc_latn_id)
+	</if>    
+ group by loc_latn_name, new_latn_name, a.type_code
+
+    </select>
+	<!-- 入境信息 -->
+	<select id="getEnterInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+	 SELECT new_latn_name , loc_latn_name, user_number,rn
+	  FROM (SELECT new_latn_name,
+	               loc_latn_name,
+	               sum(user_number) user_number,
+	               row_number() over(order by sum(user_number) desc) rn
+	          FROM TB_LARGE_LOCAL_MY a
+	         WHERE day_id = (SELECT max(day_id) FROM TB_LARGE_LOCAL_MY)
+	           and type_code = 2
+	           and loc_latn_name &lt;&gt; new_latn_name
+	           and exists (select 1
+	                  from TB_LARGE_USER_AREA_REL f
+	                 where 0 || a.loc_latn_id = f.latn_id
+	                   and f.user_id = #{userId})
+	        <if test="latnName!=null and latnName!=''">
+	           and exists (select 1
+	                  from tb_large_area g
+	                 where g.area_level = 3
+	                   and g.area_name = #{latnName}
+	                   and g.zone_number = a.loc_latn_id)
+			</if>                  
+	         group by loc_latn_name, new_latn_name)
+	 WHERE rn  &lt; 11
+	</select>
+	<!-- 离境信息 -->
+	<select id="getLeaveInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT loc_latn_name, new_latn_name, user_number,rn
+  FROM (SELECT new_latn_name,
+               loc_latn_name,
+               sum(user_number) user_number,
+               row_number() over(order by sum(user_number) desc) rn
+          FROM TB_LARGE_LOCAL_MY a
+         WHERE day_id = (SELECT max(day_id) FROM TB_LARGE_LOCAL_MY)
+           and type_code = 1
+           and loc_latn_name &lt;&gt; new_latn_name
+           and exists (select 1
+                  from TB_LARGE_USER_AREA_REL f
+                 where 0 || a.loc_latn_id = f.latn_id
+                   and f.user_id = #{userId})
+	 <if test="latnName!=null and latnName!=''">                   
+           and exists (select 1
+                  from tb_large_area g
+                 where g.area_level = 3
+                   and g.area_name = #{latnName}
+                   and g.zone_number = a.loc_latn_id)
+	</if>                   
+         group by loc_latn_name, new_latn_name)
+	 WHERE rn  &lt; 11
+	</select>
+</mapper>

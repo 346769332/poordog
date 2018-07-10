@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="scenicRoam">
+ 	<!-- 地图信息 -->
+	<select id="getMapInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT BELONG_SCENIC||'[漫入:'||ROAM_IN||',漫出:'||ROAM_OUT||']' SCENIC_NAME,
+			   LONGITUDE,
+			   LATITUDE
+		  FROM (SELECT BELONG_SCENIC,
+		               SUM(CASE
+		                     WHEN VISIT_FLAG = 0 THEN
+		                      USER_COUNT
+		                     ELSE
+		                      0
+		                   END) ROAM_IN,
+		               SUM(CASE
+		                     WHEN VISIT_FLAG = 1 THEN
+		                      USER_COUNT
+		                     ELSE
+		                      0
+		                   END) ROAM_OUT,
+		               A.LONGITUDE,
+		               A.LATITUDE
+		          FROM TB_LARGE_TRAVEL_DAYS A, TB_LARGE_CODE B
+		         WHERE B.CODE_TYPE = 'VISIT_FLAG'
+		           AND A.VISIT_FLAG = B.CODE_VALUE
+		           AND A.VISIT_FLAG IN (0,1)
+		           AND A.DATE_NO BETWEEN FUN_SPICAL_YEAR('10')||'1001' AND FUN_SPICAL_YEAR('10')||'1007'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = A.LATN_ID)
+				</if>
+		         GROUP BY BELONG_SCENIC, A.LONGITUDE, A.LATITUDE)
+    </select>
+	<!-- 漫入信息 -->
+	<select id="getRoamInInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT '国庆' COUNT_NAME, 
+		       SUM(A.USER_COUNT) USER_COUNT, 
+		       B.CODE_NAME
+		  FROM TB_LARGE_TRAVEL_DAYS A,
+		       TB_LARGE_CODE B
+		 WHERE B.CODE_TYPE = 'VISIT_FLAG'
+		   AND A.VISIT_FLAG = B.CODE_VALUE
+		   AND A.DATE_NO BETWEEN FUN_SPICAL_YEAR('10')||'1001' AND
+		       FUN_SPICAL_YEAR('10')||'1007'
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = A.LATN_ID)
+		</if>
+		 GROUP BY B.CODE_NAME
+		UNION
+		SELECT '前七天' COUNT_NAME, SUM(A1.USER_COUNT) USER_COUNT, B.CODE_NAME
+		  FROM TB_LARGE_TRAVEL_DAYS A1,
+		       TB_LARGE_CODE B
+		 WHERE B.CODE_TYPE = 'VISIT_FLAG'
+		   AND A1.VISIT_FLAG = B.CODE_VALUE
+		   AND A1.DATE_NO BETWEEN
+		       to_char(last_day(to_date(FUN_SPICAL_YEAR(10)||'09','YYYYMM'))-6,
+		               'YYYYMMDD') AND
+		       to_char(last_day(to_date(FUN_SPICAL_YEAR(10)||'09','YYYYMM')),
+		               'YYYYMMDD')
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A1.LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = A1.LATN_ID)
+		</if>
+		 GROUP BY B.CODE_NAME
+		UNION
+		SELECT '前前七天' COUNT_NAME, SUM(A2.USER_COUNT) USER_COUNT, B.CODE_NAME
+		  FROM TB_LARGE_TRAVEL_DAYS A2,
+		       TB_LARGE_CODE B
+		 WHERE B.CODE_TYPE = 'VISIT_FLAG'
+		   AND A2.VISIT_FLAG = B.CODE_VALUE
+		   AND A2.DATE_NO BETWEEN
+		       to_char(last_day(to_date(FUN_SPICAL_YEAR(10)||'09','YYYYMM'))-13,
+		               'YYYYMMDD') AND
+		       to_char(last_day(to_date(FUN_SPICAL_YEAR(10)||'09','YYYYMM'))-7,
+		               'YYYYMMDD')
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A2.LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = A2.LATN_ID)
+		</if>
+		 GROUP BY B.CODE_NAME
+	</select>
+	<!-- 漫入方式 -->
+	<select id="getRoamInTypeInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT A.DATE_NO,
+		       B.CODE_NAME code_name,
+		       SUM(A.USER_COUNT) user_count
+		  FROM TB_LARGE_TRAVEL_DAY A,
+		       TB_LARGE_CODE B
+		 WHERE B.CODE_TYPE = 'OUT_TOOLS'
+		   AND B.CODE_VALUE = A.OUT_TOOLS
+		   AND A.DATE_NO BETWEEN FUN_SPICAL_YEAR('10')||'1001' AND FUN_SPICAL_YEAR('10')||'1007'
+		   AND A.OUT_TOOLS &lt;&gt; 0
+		   AND B.CODE_VALUE &lt;&gt; 0		   
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_USER_AREA_REL F
+		         WHERE A.LATN_ID = F.LATN_ID
+		           AND F.USER_ID = #{userId})
+		<if test="latnName!=null and latnName!=''">
+		   AND EXISTS (SELECT 1
+		          FROM TB_LARGE_AREA G
+		         WHERE G.AREA_LEVEL = 3
+		           AND G.AREA_NAME = #{latnName}
+		           AND G.ZONE_NUMBER = A.LATN_ID)
+		</if>
+		 GROUP BY A.DATE_NO,B.CODE_NAME
+		 ORDER BY A.DATE_NO,B.CODE_NAME
+	</select>
+	<!-- 景点排行境信息 -->
+	<select id="getRankInfo" parameterType="java.lang.Object" resultType="com.frame.common.BaseMap">
+		SELECT RN,
+       		   BELONG_SCENIC scenic_name,
+       		   USER_COUNT inner_count
+		  FROM (SELECT BELONG_SCENIC,
+		               CODE_NAME,
+		               SUM(USER_COUNT) USER_COUNT,
+		               ROW_NUMBER() OVER(ORDER BY SUM(USER_COUNT) DESC) RN
+		          FROM TB_LARGE_TRAVEL_DAYS A, TB_LARGE_CODE B
+		         WHERE B.CODE_TYPE = 'VISIT_FLAG'
+		           AND A.VISIT_FLAG = B.CODE_VALUE
+		           AND A.VISIT_FLAG = 0
+		           AND A.DATE_NO BETWEEN '20161001' AND '20161007'
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_USER_AREA_REL F
+		                 WHERE A.LATN_ID = F.LATN_ID
+		                   AND F.USER_ID = #{userId})
+				<if test="latnName!=null and latnName!=''">
+		           AND EXISTS (SELECT 1
+		                  FROM TB_LARGE_AREA G
+		                 WHERE G.AREA_LEVEL = 3
+		                   AND G.AREA_NAME = #{latnName}
+		                   AND G.ZONE_NUMBER = A.LATN_ID)
+				</if>
+		         GROUP BY BELONG_SCENIC, CODE_NAME)
+		 WHERE RN &lt; 11
+	</select>
+</mapper>
